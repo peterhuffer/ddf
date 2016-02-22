@@ -102,7 +102,6 @@ public class NitfInputTransformer implements InputTransformer {
         // TODO: update to XStream or some xml streaming library to create this metadata
         StringBuilder metadataXml = new StringBuilder();
         metadataXml.append("<metadata>\n");
-        metadataXml.append("  <file>\n");
 
         try {
             AllDataExtractionParseStrategy parsingStrategy = new AllDataExtractionParseStrategy();
@@ -117,6 +116,7 @@ public class NitfInputTransformer implements InputTransformer {
                         handleImageSegmentHeader(metacard, imagesegmentHeader, polygonList);
                         setMetadataFromImageSegments(metadataXml, imagesegmentHeader);
                     });
+
             // TODO: implement and use flow API for Graphic, Symbol, Label, and Text Segments
 
             for (NitfGraphicSegmentHeader graphic : parsingStrategy.getGraphicSegmentHeaders()) {
@@ -150,7 +150,8 @@ public class NitfInputTransformer implements InputTransformer {
 
             metacard.setAttribute(Metacard.CONTENT_TYPE, MIME_TYPE);
 
-        } catch (ParseException e) {
+        }
+        catch (ParseException e) {
             throw new CatalogTransformerException(e);
         }
 
@@ -203,17 +204,22 @@ public class NitfInputTransformer implements InputTransformer {
                         .getClassificationReason());
         String s = header.getFileSecurityMetadata()
                 .getSecuritySourceDate();
+        /*
         if (StringUtils.isNotEmpty(s)) {
             // TODO: Convert to date
             metacard.addAttribute(Nitf.CLASSIFICATION_DATE, s);
         }
+        */
         metacard.addAttribute(Nitf.DECLASSIFICATION_TYPE,
                 header.getFileSecurityMetadata()
                         .getDeclassificationType());
+
+        // TODO convert to date
+        /*
         metacard.addAttribute(Nitf.DECLASSIFICATION_DATE,
                 header.getFileSecurityMetadata()
                         .getDeclassificationDate());
-
+*/
         // TODO: add the TRE's as attributes to the MetacardType Dynamically?
     }
 

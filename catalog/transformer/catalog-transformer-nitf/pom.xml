@@ -20,7 +20,7 @@
         <version>2.9.0-SNAPSHOT</version>
     </parent>
     <groupId>ddf.catalog.transformer</groupId>
-    <artifactId>catalog-transformer-nitf</artifactId>
+    <artifactId>nitf-input-transformer</artifactId>
     <packaging>bundle</packaging>
     <name>DDF :: Catalog :: Transformer :: NITF</name>
     <properties>
@@ -126,7 +126,6 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Embed-Dependency>
-                            catalog-core-api,
                             catalog-core-api-impl,
                             catalog-core-dynamic-impl,
                             platform-util,
@@ -187,7 +186,7 @@
                                         <limit>
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.55</minimum>
+                                            <minimum>0.54</minimum>
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>

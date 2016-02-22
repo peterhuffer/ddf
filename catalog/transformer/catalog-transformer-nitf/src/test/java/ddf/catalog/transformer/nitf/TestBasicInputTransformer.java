@@ -32,6 +32,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.osgi.framework.BundleContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.QualifiedMetacardType;
@@ -46,6 +48,7 @@ import ddf.catalog.source.UnsupportedQueryException;
 import ddf.catalog.transform.CatalogTransformerException;
 
 public class TestBasicInputTransformer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestBasicInputTransformer.class);
     private static final BundleContext context = mock(BundleContext.class);
     private static List<QualifiedMetacardType> qmtList = new ArrayList<QualifiedMetacardType>();
 
@@ -102,7 +105,7 @@ public class TestBasicInputTransformer {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         assertThat(formatter.format(metacard.getCreatedDate()), is("2014-08-17 07:22:41"));
-        System.out.println("metacard = " + metacard.getMetadata());
+        LOGGER.info("metacard = {}", metacard.getMetadata());
     }
 
     @Test()
@@ -116,7 +119,7 @@ public class TestBasicInputTransformer {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         assertThat(formatter.format(metacard.getCreatedDate()), is("1999-02-10 14:01:44"));
-        System.out.println("metacard = " + metacard.getMetadata());
+        LOGGER.info("metacard = {}", metacard.getMetadata());
     }
 
     private InputStream getInputStream(String filename) {

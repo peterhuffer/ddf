@@ -104,8 +104,8 @@ public class NitfInputTransformer implements InputTransformer {
             throw new CatalogTransformerException("Unable to create NITF metacard.");
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        IOUtils.copy(input, baos);
+//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//        IOUtils.copy(input, baos);
         List<Polygon> polygonList = new ArrayList<>();
         // TODO: update to XStream or some xml streaming library to create this metadata
         StringBuilder metadataXml = new StringBuilder();
@@ -114,8 +114,8 @@ public class NitfInputTransformer implements InputTransformer {
 
         try {
             AllDataExtractionParseStrategy parsingStrategy = new AllDataExtractionParseStrategy();
-            NitfInputStreamReader streamReader = new NitfInputStreamReader(new ByteArrayInputStream(
-                    baos.toByteArray()));
+//            NitfInputStreamReader streamReader = new NitfInputStreamReader(new ByteArrayInputStream(
+//                    baos.toByteArray()));
             NitfParserInputFlow inputFlow = new NitfParserInputFlow();
             inputFlow.inputStream(input)
                     .imageData()
@@ -240,9 +240,9 @@ public class NitfInputTransformer implements InputTransformer {
     private Date getDate(String string) {
         Date date = null;
         if (StringUtils.isNotEmpty(string)) {
-            try {
-                date = SECURITY_DATE_FORMATTER.parse(string);
-            } catch (ParseException e) {
+//                date = SECURITY_DATE_FORMATTER.parse(string);
+            date = DATE_TIME_FORMATTER.parseDateTime(string).toDate();
+            if (date == null) {
                 LOGGER.warn("Error parsing date - source value {}", string);
             }
         }

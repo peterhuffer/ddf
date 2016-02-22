@@ -29,7 +29,7 @@ import java.util.Date;
  * by the xml files.
  */
 public interface Nitf {
-    public static final String NAME = "ddf/catalog/transformer/nitf";
+    public static final String NAME = "nitf";
 
     public static final String NITF_VERSION = "version";
 

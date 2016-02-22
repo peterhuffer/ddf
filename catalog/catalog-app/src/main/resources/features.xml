@@ -224,7 +224,7 @@
              description="Input transformer that handles NITF files.">
         <feature prerequisite="true">catalog-core-api</feature>
         <bundle>mvn:ddf.catalog.transformer/nitf-input-transformer/${project.version}</bundle>
-        <configfile finalname="/metadata/nitf.xml">
+        <configfile finalname="/etc/metadata/nitf.xml">
             mvn:ddf.catalog.transformer/nitf-input-transformer/${project.version}/xml/nitfDefinition
         </configfile>
     </feature>

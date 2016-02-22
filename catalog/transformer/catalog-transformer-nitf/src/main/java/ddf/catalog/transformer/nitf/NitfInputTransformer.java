@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Codice Foundation
- * <p>
+ * <p/>
  * This is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser
  * General Public License as published by the Free Software Foundation, either version 3 of the
  * License, or any later version.
- * <p>
+ * <p/>
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
  * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details. A copy of the GNU Lesser General Public License
@@ -150,8 +150,7 @@ public class NitfInputTransformer implements InputTransformer {
 
             metacard.setAttribute(Metacard.CONTENT_TYPE, MIME_TYPE);
 
-        }
-        catch (ParseException e) {
+        } catch (ParseException e) {
             throw new CatalogTransformerException(e);
         }
 
@@ -262,7 +261,8 @@ public class NitfInputTransformer implements InputTransformer {
     private Date getDate(String string) {
         Date date = null;
         if (StringUtils.isNotEmpty(string)) {
-            date = DATE_TIME_FORMATTER.parseDateTime(string).toDate();
+            date = DATE_TIME_FORMATTER.parseDateTime(string)
+                    .toDate();
             if (date == null) {
                 LOGGER.warn("Error parsing date - source value {}", string);
             }

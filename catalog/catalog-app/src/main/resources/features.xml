@@ -103,6 +103,7 @@
         <feature>catalog-transformer-xml</feature>
         <feature>catalog-transformer-tika</feature>
         <feature>catalog-transformer-video</feature>
+        <feature>catalog-transformer-nitf</feature>
     </feature>
 
     <feature name="catalog-rest" install="manual" version="${project.version}">
@@ -217,6 +218,15 @@
     <feature name="catalog-transformer-video" install="manual" version="${project.version}"
              description="Input transformer that handles video files.">
         <bundle>mvn:ddf.catalog.transformer/video-input-transformer/${project.version}</bundle>
+    </feature>
+
+    <feature name="catalog-transformer-nitf" install="manual" version="${project.version}"
+             description="Input transformer that handles NITF files.">
+        <feature prerequisite="true">catalog-core-api</feature>
+        <bundle>mvn:ddf.catalog.transformer/catalog-transformer-nitf/${project.version}</bundle>
+        <configfile finalname="/metadata/nitf.xml">
+            mvn:ddf.catalog.transformer/catalog-transformer-nitf/${project.version}/xml/nitfDefinition
+        </configfile>
     </feature>
 
     <feature name="catalog-transformer-json" install="manual" version="${project.version}"

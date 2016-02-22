@@ -24,65 +24,51 @@
     <packaging>bundle</packaging>
     <name>DDF :: Catalog :: Transformer :: NITF</name>
     <properties>
-        <ddfcatalog.version>2.9.0-SNAPSHOT</ddfcatalog.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>codice.releases</id>
-            <url>http://artifacts.codice.org/content/repositories/releases</url>
-        </repository>
-        <repository>
-            <id>codice.snapshots</id>
-            <url>http://artifacts.codice.org/content/repositories/snapshots</url>
-        </repository>
-    </repositories>
 
     <dependencies>
 
         <dependency>
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-api</artifactId>
-            <version>${ddfcatalog.version}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-api-impl</artifactId>
-            <version>${ddfcatalog.version}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>ddf.catalog.transformer</groupId>
-            <artifactId>catalog-transformer-xml</artifactId>
-            <version>${ddfcatalog.version}</version>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
         </dependency>
 
         <dependency>
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-dynamic-api</artifactId>
-            <version>${ddfcatalog.version}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-dynamic-impl</artifactId>
-            <version>${ddfcatalog.version}</version>
-            <!--<scope>test</scope>-->
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-dynamic-registry</artifactId>
-            <version>${ddfcatalog.version}</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>ddf.platform.util</groupId>
             <artifactId>platform-util</artifactId>
-            <version>${ddfcatalog.version}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -95,12 +81,6 @@
                     <artifactId>xercesImpl</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.ipojo.annotations</artifactId>
-            <version>1.8.0</version>
         </dependency>
 
         <dependency>
@@ -130,83 +110,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.7</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.7.13</version>
-        </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>1.9.5</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--
-                <dependency>
-                    <groupId>commons-beanutils</groupId>
-                    <artifactId>commons-beanutils</artifactId>
-                    <version>1.9.2</version>
-                </dependency>
-        -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-weaver-privilizer-api</artifactId>
-            <version>1.1</version>
-        </dependency>
-        <!--
-                <dependency>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-digester3</artifactId>
-                    <version>3.2</version>
-                    <classifier>with-deps</classifier>
-                </dependency>
-        -->
-        <dependency>
-            <groupId>commons-digester</groupId>
-            <artifactId>commons-digester</artifactId>
-            <version>1.8.1</version>
-        </dependency>
-
-        <!--
-                <dependency>
-                    <groupId>org.apache.bval</groupId>
-                    <artifactId>org.apache.bval.bundle</artifactId>
-                    <version>1.1.0</version>
-                </dependency>
-        -->
-        <dependency>
-            <groupId>javax.enterprise</groupId>
-            <artifactId>cdi-api</artifactId>
-            <version>1.2</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.el</groupId>
-            <artifactId>el-api</artifactId>
-            <version>2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.interceptor</groupId>
-            <artifactId>javax.interceptor-api</artifactId>
-            <version>1.2</version>
         </dependency>
 
     </dependencies>
@@ -216,29 +119,14 @@
         <testSourceDirectory>src/test/java</testSourceDirectory>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <maxmem>512M</maxmem>
-                    <!--<fork>${compiler.fork}</fork>-->
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-
-            <!-- The maven-bundle-plugin is required for this artifact to be an OSGi bundle. -->
-            <!-- Add in additional imports that this bundle requires using a comma-seperated list. -->
-            <plugin>
                 <groupId>org.apache.felix</groupId>
-                <version>2.3.6</version>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Embed-Dependency>
+                            catalog-core-api,
                             catalog-core-api-impl,
                             catalog-core-dynamic-impl,
                             platform-util,
@@ -247,42 +135,58 @@
                             commons-beanutils,
                             codice-imaging-nitf-core,
                             codice-imaging-cgm,
-                            commons-lang3,
-                            commons-weaver-privilizer-api,
-                            commons-digester,
-                            <!--
-                                                        commons-digester3,
-                            -->
-                            el-api,
-                            javax.interceptor-api,
-                            jcl-over-slf4j
+                            codice-imaging-nitf-render,
+                            commons-lang3
                         </Embed-Dependency>
                         <Export-Package/>
                         <Import-Package>
-                            ddf.catalog;version="[2.0,3)",
-                            ddf.catalog.data;version="[2.0,3)",
-                            ddf.catalog.event;version="[2.0,3)",
-                            ddf.catalog.federation;version="[2.0,3)",
-                            ddf.catalog.operation;version="[2.0,3)",
-                            ddf.catalog.plugin;version="[2.0,3)",
-                            ddf.catalog.resource;version="[2.0,3)",
-                            ddf.catalog.source;version="[2.0,3)",
-                            ddf.catalog.transform;version="[2.0,3)",
-                            ddf.catalog.util;version="[2.0,3)",
-                            ddf.catalog.validation;version="[2.0,3)",
-                            <!--
-                                                        org.apache.commons.beanutils;version="1.9.2",
-                            -->
-                            ddf.catalog.data.dynamic.api;version="[2.9,3)",
+                            org.slf4j,
                             *
                         </Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.4.1</version>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <haltOnFailure>true</haltOnFailure>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.55</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.53</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>COMPLEXITY</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.48</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.59</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -88,6 +88,7 @@
         <module>catalog-transformer-thumbnail</module>
         <module>catalog-transformer-tika-input</module>
         <module>catalog-transformer-video-input</module>
+        <module>catalog-transformer-nitf</module>
         <module>catalog-transformer-geojson-input</module>
         <module>catalog-transformer-geojson-metacard</module>
         <module>catalog-transformer-geojson-queryresponse</module>

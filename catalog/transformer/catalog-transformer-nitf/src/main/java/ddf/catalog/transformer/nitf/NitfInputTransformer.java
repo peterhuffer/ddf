@@ -256,9 +256,7 @@ public class NitfInputTransformer implements InputTransformer {
     private Date getDate(String string) {
         Date date = null;
         if (StringUtils.isNotEmpty(string)) {
-            //                date = SECURITY_DATE_FORMATTER.parse(string);
-            date = DATE_TIME_FORMATTER.parseDateTime(string)
-                    .toDate();
+            date = DATE_TIME_FORMATTER.parseDateTime(string).toDate();
             if (date == null) {
                 LOGGER.warn("Error parsing date - source value {}", string);
             }

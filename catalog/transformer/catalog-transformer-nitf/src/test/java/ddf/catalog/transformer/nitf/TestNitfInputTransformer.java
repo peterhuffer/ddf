@@ -44,8 +44,8 @@ import ddf.catalog.source.SourceUnavailableException;
 import ddf.catalog.source.UnsupportedQueryException;
 import ddf.catalog.transform.CatalogTransformerException;
 
-public class TestBasicInputTransformer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestBasicInputTransformer.class);
+public class TestNitfInputTransformer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestNitfInputTransformer.class);
 
     private static final String BE_NUM_NITF = "/WithBE.ntf";
 

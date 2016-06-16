@@ -148,10 +148,10 @@ public class FtpRequestHandler extends DefaultFtplet {
                 throw new FtpException("Insufficient permissions to write file");
             }
 
+
             session.write(new DefaultFtpReply(FtpReply.REPLY_150_FILE_STATUS_OKAY,
                     STOR_REQUEST + " " + fileName));
             LOGGER.debug("Replying to client with code 150 - file status okay");
-
             try (FileBackedOutputStream outputStream = new FileBackedOutputStream(1000000);
                     final AutoCloseable ac = outputStream::reset) {
                 DataConnection dataConnection = connFactory.openConnection();

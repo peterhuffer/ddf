@@ -1,0 +1,53 @@
+/**
+ * Copyright (c) Codice Foundation
+ * <p>
+ * This is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details. A copy of the GNU Lesser General Public License
+ * is distributed along with this program and can be found at
+ * <http://www.gnu.org/licenses/lgpl.html>.
+ */
+package org.codice.ddf.catalog.async.plugin.api.internal;
+
+import org.codice.ddf.catalog.async.data.api.internal.ProcessDeleteItem;
+import org.codice.ddf.catalog.async.data.api.internal.ProcessRequest;
+import org.codice.ddf.catalog.async.data.api.internal.ProcessResourceItem;
+
+import ddf.catalog.plugin.PluginExecutionException;
+
+/**
+ * <p>
+ * <b> This code is experimental. While this interface is functional and tested, it may change or be
+ * removed in a future version of the library. </b>
+ * </p>
+ * <p>
+ * A {@code PostProcessPlugin} represents a process that will be run asynchronously by the {@link ProcessingFramework}.
+ * The {@code PostProcessPlugin}s may only be run after the {@link ddf.catalog.data.Metacard}s have been
+ * ingested into the catalog. This will allow the {@code PostProcessPlugin}s to be able to use a copy
+ * of the {@link ddf.catalog.data.Metacard}, and optionally a copy of the associated {@link ddf.catalog.resource.Resource}
+ * of the catalog-stored record, in order to perform processing asynchronously.
+ */
+public interface PostProcessPlugin {
+
+    /**
+     * Submits a {@link ProcessRequest<ProcessResourceItem>} to be processed by the {@code PostProcessPlugin}.
+     *
+     * @param input the {@link ProcessRequest<ProcessResourceItem>} to be processed
+     * @return the modified {@link ProcessRequest<ProcessResourceItem>} after processing
+     */
+    ProcessRequest<ProcessResourceItem> process(ProcessRequest<ProcessResourceItem> input)
+            throws PluginExecutionException;
+
+    /**
+     * Submits a {@link ProcessRequest<ProcessDeleteItem>} to be processed by the {@code PostProcessPlugin}.
+     *
+     * @param input the {@link ProcessRequest<ProcessDeleteItem>} to be processed
+     * @return the modified {@link ProcessRequest<ProcessDeleteItem>} after processing
+     */
+    ProcessRequest<ProcessDeleteItem> processDelete(ProcessRequest<ProcessDeleteItem> input)
+            throws PluginExecutionException;
+}

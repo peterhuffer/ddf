@@ -68,6 +68,12 @@
             <artifactId>commons-lang3</artifactId>
             <version>${commons-lang3.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ddf.lib</groupId>
+            <artifactId>spock-shaded</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -87,7 +93,7 @@
                             platform-util-unavailableurls
                         </Embed-Dependency>
                         <Private-Package>
-                            org.codice.ddf.catalog.processingframework.impl
+                            org.codice.ddf.catalog.async.processingframework.impl
                         </Private-Package>
                     </instructions>
                 </configuration>

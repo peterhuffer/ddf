@@ -13,9 +13,10 @@
  */
 package org.codice.ddf.catalog.async.plugin.api.internal;
 
+import org.codice.ddf.catalog.async.data.api.internal.ProcessCreateItem;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessDeleteItem;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessRequest;
-import org.codice.ddf.catalog.async.data.api.internal.ProcessResourceItem;
+import org.codice.ddf.catalog.async.data.api.internal.ProcessUpdateItem;
 
 import ddf.catalog.plugin.PluginExecutionException;
 
@@ -34,12 +35,21 @@ import ddf.catalog.plugin.PluginExecutionException;
 public interface PostProcessPlugin {
 
     /**
-     * Submits a {@link ProcessRequest<ProcessResourceItem>} to be processed by the {@code PostProcessPlugin}.
+     * Submits a {@link ProcessRequest<ProcessCreateItem>} to be processed by the {@code PostProcessPlugin}.
      *
-     * @param input the {@link ProcessRequest<ProcessResourceItem>} to be processed
-     * @return the modified {@link ProcessRequest<ProcessResourceItem>} after processing
+     * @param input the {@link ProcessRequest<ProcessCreateItem>} to be processed
+     * @return the modified {@link ProcessRequest<ProcessCreateItem>} after processing
      */
-    ProcessRequest<ProcessResourceItem> process(ProcessRequest<ProcessResourceItem> input)
+    ProcessRequest<ProcessCreateItem> processCreate(ProcessRequest<ProcessCreateItem> input)
+            throws PluginExecutionException;
+
+    /**
+     * Submits a {@link ProcessRequest<ProcessUpdateItem>} to be processed by the {@code PostProcessPlugin}.
+     *
+     * @param input the {@link ProcessRequest<ProcessUpdateItem>} to be processed
+     * @return the modified {@link ProcessRequest<ProcessUpdateItem>} after processing
+     */
+    ProcessRequest<ProcessUpdateItem> processUpdate(ProcessRequest<ProcessUpdateItem> input)
             throws PluginExecutionException;
 
     /**

@@ -13,9 +13,10 @@
  */
 package org.codice.ddf.catalog.async.processingframework.api.internal;
 
+import org.codice.ddf.catalog.async.data.api.internal.ProcessCreateItem;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessDeleteItem;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessRequest;
-import org.codice.ddf.catalog.async.data.api.internal.ProcessResourceItem;
+import org.codice.ddf.catalog.async.data.api.internal.ProcessUpdateItem;
 
 /**
  * <p>
@@ -26,18 +27,26 @@ import org.codice.ddf.catalog.async.data.api.internal.ProcessResourceItem;
  * The {@code ProcessingFramework} processes all requests submitted to it. Available requests for processing
  * are as follows:
  * <ul>
- * <li>{@link ProcessRequest<ProcessResourceItem>}</li>
+ * <li>{@link ProcessRequest<ProcessCreateItem>}</li>
+ * <li>{@link ProcessRequest<ProcessUpdateItem>}</li>
  * <li>{@link ProcessRequest<ProcessDeleteItem>}</li>
  * </ul>
  */
 public interface ProcessingFramework {
 
     /**
-     * Submits a {@link ProcessRequest<ProcessResourceItem>} to be processed by the {@code ProcessingFramework}.
+     * Submits a {@link ProcessRequest<ProcessCreateItem>} to be processed by the {@code ProcessingFramework}.
      *
-     * @param input the {@code ProcessUpdateRequest} to be processed
+     * @param input the {@link ProcessRequest<ProcessCreateItem>} to be processed
      */
-    void submit(ProcessRequest<ProcessResourceItem> input);
+    void submitCreate(ProcessRequest<ProcessCreateItem> input);
+
+    /**
+     * Submits a {@link ProcessRequest<ProcessUpdateItem>} to be processed by the {@code ProcessingFramework}.
+     *
+     * @param input the {@link ProcessRequest<ProcessUpdateItem>} to be processed
+     */
+    void submitUpdate(ProcessRequest<ProcessUpdateItem> input);
 
     /**
      * Submits a {@link ProcessRequest<ProcessDeleteItem>} to be processed by the {@code ProcessingFramework}.

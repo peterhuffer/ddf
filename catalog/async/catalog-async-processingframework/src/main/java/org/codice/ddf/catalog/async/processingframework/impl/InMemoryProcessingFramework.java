@@ -32,10 +32,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.codice.ddf.catalog.async.data.ProcessResourceImpl;
+import org.codice.ddf.catalog.async.data.api.internal.ProcessCreateItem;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessDeleteItem;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessRequest;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessResource;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessResourceItem;
+import org.codice.ddf.catalog.async.data.api.internal.ProcessUpdateItem;
 import org.codice.ddf.catalog.async.plugin.api.internal.PostProcessPlugin;
 import org.codice.ddf.catalog.async.processingframework.api.internal.ProcessingFramework;
 import org.codice.ddf.platform.util.TemporaryFileBackedOutputStream;
@@ -116,7 +118,7 @@ public class InMemoryProcessingFramework implements ProcessingFramework {
     }
 
     @Override
-    public void submit(final ProcessRequest<ProcessResourceItem> input) {
+    public void submitCreate(ProcessRequest<ProcessCreateItem> input) {
         if (postProcessPlugins == null || postProcessPlugins.isEmpty()) {
             LOGGER.debug("postProcessPlugins is empty. Not starting post process thread");
         } else {
@@ -127,11 +129,43 @@ public class InMemoryProcessingFramework implements ProcessingFramework {
             }
 
             threadPool.submit(() -> {
-                ProcessRequest<ProcessResourceItem> request = input;
+                ProcessRequest<ProcessCreateItem> request = input;
 
                 for (PostProcessPlugin plugin : postProcessPlugins) {
                     try {
-                        request = plugin.process(request);
+                        request = plugin.processCreate(request);
+                    } catch (PluginExecutionException e) {
+                        LOGGER.debug("Unable to process request through plugin: {}",
+                                plugin.getClass()
+                                        .getCanonicalName(),
+                                e);
+                    }
+                }
+
+                storeProcessRequest(request);
+                cleanUpProcessResources(getResourceIds(request));
+            });
+        }
+    }
+
+    // TODO refactor out common code with submitCreate
+    @Override
+    public void submitUpdate(ProcessRequest<ProcessUpdateItem> input) {
+        if (postProcessPlugins == null || postProcessPlugins.isEmpty()) {
+            LOGGER.debug("postProcessPlugins is empty. Not starting post process thread");
+        } else {
+            for (ProcessResourceItem item : input.getProcessItems()) {
+                // copy stream to avoid issue with original inputStream being closed by another
+                // process before asynchronous processes are done with it.
+                copyItemStream(item.getProcessResource());
+            }
+
+            threadPool.submit(() -> {
+                ProcessRequest<ProcessUpdateItem> request = input;
+
+                for (PostProcessPlugin plugin : postProcessPlugins) {
+                    try {
+                        request = plugin.processUpdate(request);
                     } catch (PluginExecutionException e) {
                         LOGGER.debug("Unable to process request through plugin: {}",
                                 plugin.getClass()
@@ -147,7 +181,7 @@ public class InMemoryProcessingFramework implements ProcessingFramework {
     }
 
     @Override
-    public void submitDelete(final ProcessRequest<ProcessDeleteItem> input) {
+    public void submitDelete(ProcessRequest<ProcessDeleteItem> input) {
         if (postProcessPlugins == null || postProcessPlugins.isEmpty()) {
             LOGGER.debug("postProcessPlugins is empty. Not starting post process thread");
         } else {
@@ -168,7 +202,7 @@ public class InMemoryProcessingFramework implements ProcessingFramework {
         }
     }
 
-    private Set<String> getResourceIds(ProcessRequest<ProcessResourceItem> request) {
+    private Set<String> getResourceIds(ProcessRequest<? extends ProcessResourceItem> request) {
         return request.getProcessItems()
                 .stream()
                 .map(item -> item.getProcessResource()
@@ -176,13 +210,14 @@ public class InMemoryProcessingFramework implements ProcessingFramework {
                 .collect(Collectors.toSet());
     }
 
-    private void storeProcessRequest(ProcessRequest<ProcessResourceItem> processRequest) {
+    private <T extends ProcessResourceItem> void storeProcessRequest(
+            ProcessRequest<T> processRequest) {
         LOGGER.trace("Storing update request post processing change(s)");
 
         Set<ContentItem> contentItemsToUpdate = new HashSet<>();
         Set<Metacard> metacardsToUpdate = new HashSet<>();
 
-        for (ProcessResourceItem item : processRequest.getProcessItems()) {
+        for (T item : processRequest.getProcessItems()) {
             if (item.isMetacardModified()) {
                 metacardsToUpdate.add(item.getMetacard());
             }
@@ -265,10 +300,6 @@ public class InMemoryProcessingFramework implements ProcessingFramework {
         }
     }
 
-    public void setPostProcessPlugins(List<PostProcessPlugin> postProcessPlugins) {
-        this.postProcessPlugins = postProcessPlugins;
-    }
-
     private void copyItemStream(ProcessResource processResource) {
         try {
             TemporaryFileBackedOutputStream outputStream = new TemporaryFileBackedOutputStream();
@@ -304,5 +335,9 @@ public class InMemoryProcessingFramework implements ProcessingFramework {
                         resourceMap.remove(id);
                     }
                 });
+    }
+
+    public void setPostProcessPlugins(List<PostProcessPlugin> postProcessPlugins) {
+        this.postProcessPlugins = postProcessPlugins;
     }
 }

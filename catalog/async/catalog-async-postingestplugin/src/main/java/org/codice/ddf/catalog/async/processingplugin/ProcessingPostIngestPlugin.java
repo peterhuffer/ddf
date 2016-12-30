@@ -30,7 +30,6 @@ import org.codice.ddf.catalog.async.data.api.internal.ProcessCreateItem;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessDeleteItem;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessRequest;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessResource;
-import org.codice.ddf.catalog.async.data.api.internal.ProcessResourceItem;
 import org.codice.ddf.catalog.async.data.api.internal.ProcessUpdateItem;
 import org.codice.ddf.catalog.async.processingframework.api.internal.ProcessingFramework;
 import org.codice.ddf.security.common.Security;
@@ -92,7 +91,7 @@ public class ProcessingPostIngestPlugin implements PostIngestPlugin {
     public CreateResponse process(CreateResponse input) throws PluginExecutionException {
         if (input != null && input.getCreatedMetacards() != null
                 && !isAlreadyPostProcessed(input)) {
-            processingFramework.submit(createCreateRequest(input));
+            processingFramework.submitCreate(createCreateRequest(input));
         }
         return input;
     }
@@ -101,7 +100,7 @@ public class ProcessingPostIngestPlugin implements PostIngestPlugin {
     public UpdateResponse process(UpdateResponse input) throws PluginExecutionException {
         if (input != null && input.getUpdatedMetacards() != null
                 && !isAlreadyPostProcessed(input)) {
-            processingFramework.submit(createUpdateRequest(input));
+            processingFramework.submitUpdate(createUpdateRequest(input));
         }
         return input;
     }
@@ -115,7 +114,7 @@ public class ProcessingPostIngestPlugin implements PostIngestPlugin {
         return input;
     }
 
-    private ProcessRequest<ProcessResourceItem> createCreateRequest(CreateResponse createResponse) {
+    private ProcessRequest<ProcessCreateItem> createCreateRequest(CreateResponse createResponse) {
         List<ProcessCreateItem> processCreateItems = new ArrayList<>();
 
         for (Metacard metacard : createResponse.getCreatedMetacards()) {
@@ -126,7 +125,7 @@ public class ProcessingPostIngestPlugin implements PostIngestPlugin {
         return new ProcessRequestImpl(processCreateItems, createResponse.getProperties());
     }
 
-    private ProcessRequest<ProcessResourceItem> createUpdateRequest(UpdateResponse updateResponse) {
+    private ProcessRequest<ProcessUpdateItem> createUpdateRequest(UpdateResponse updateResponse) {
         List<Update> updates = updateResponse.getUpdatedMetacards();
         List<ProcessUpdateItem> processUpdateItems = new ArrayList<>();
 

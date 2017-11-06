@@ -17,7 +17,11 @@ import com.github.sardine.Sardine;
 import com.github.sardine.SardineFactory;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import org.apache.camel.Exchange;
@@ -97,7 +101,7 @@ public class DurableWebDavFileConsumer extends AbstractDurableFileConsumer {
             }
           });
     } catch (IOException e) {
-      LOGGER.error("failed to retrieve file " + entry.getLocation(), e);
+      LOGGER.debug("failed to retrieve file " + entry.getLocation(), e);
     }
     return exchange;
   }
@@ -110,7 +114,15 @@ public class DurableWebDavFileConsumer extends AbstractDurableFileConsumer {
 
     @Override
     public void onFileCreate(DavEntry entry) {
-      processExchange(getExchange(entry, StandardWatchEventKinds.ENTRY_CREATE));
+      Exchange exchange = getExchange(entry, StandardWatchEventKinds.ENTRY_CREATE);
+      try {
+        exchange
+            .getIn()
+            .setHeader("mimeType", Files.probeContentType(Paths.get(new URI(entry.getLocation()))));
+      } catch (IOException | URISyntaxException e) {
+        LOGGER.debug("Error getting mimeType of DavEntry {}.", entry.getLocation(), e);
+      }
+      processExchange(exchange);
     }
 
     @Override
@@ -120,7 +132,15 @@ public class DurableWebDavFileConsumer extends AbstractDurableFileConsumer {
 
     @Override
     public void onFileChange(DavEntry entry) {
-      processExchange(getExchange(entry, StandardWatchEventKinds.ENTRY_MODIFY));
+      Exchange exchange = getExchange(entry, StandardWatchEventKinds.ENTRY_MODIFY);
+      try {
+        exchange
+            .getIn()
+            .setHeader("mimeType", Files.probeContentType(Paths.get(new URI(entry.getLocation()))));
+      } catch (IOException | URISyntaxException e) {
+        LOGGER.debug("Error getting mimeType of DavEntry {}.", entry.getLocation(), e);
+      }
+      processExchange(exchange);
     }
 
     @Override
@@ -130,7 +150,15 @@ public class DurableWebDavFileConsumer extends AbstractDurableFileConsumer {
 
     @Override
     public void onFileDelete(DavEntry entry) {
-      processExchange(getExchange(entry, StandardWatchEventKinds.ENTRY_DELETE));
+      Exchange exchange = getExchange(entry, StandardWatchEventKinds.ENTRY_DELETE);
+      try {
+        exchange
+            .getIn()
+            .setHeader("mimeType", Files.probeContentType(Paths.get(new URI(entry.getLocation()))));
+      } catch (IOException | URISyntaxException e) {
+        LOGGER.debug("Error getting mimeType of DavEntry {}.", entry.getLocation(), e);
+      }
+      processExchange(exchange);
     }
   }
 }

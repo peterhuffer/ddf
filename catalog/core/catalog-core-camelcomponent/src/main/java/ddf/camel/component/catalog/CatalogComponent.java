@@ -39,7 +39,7 @@ public class CatalogComponent extends DefaultComponent {
   /** The name of the scheme this custom Camel component resolves to. */
   public static final String NAME = "catalog";
 
-  private static final transient Logger LOGGER = LoggerFactory.getLogger(CatalogComponent.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CatalogComponent.class);
 
   private BundleContext bundleContext;
 

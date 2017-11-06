@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ContentEndpoint extends DefaultEndpoint {
-  private static final transient Logger LOGGER = LoggerFactory.getLogger(ContentEndpoint.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ContentEndpoint.class);
 
   public ContentEndpoint(String uri, ContentComponent component) {
     super(uri, component);
@@ -34,6 +34,7 @@ public class ContentEndpoint extends DefaultEndpoint {
    *
    * @see org.apache.camel.impl.DefaultEndpoint#getComponent()
    */
+  @Override
   public ContentComponent getComponent() {
     return (ContentComponent) super.getComponent();
   }
@@ -43,9 +44,7 @@ public class ContentEndpoint extends DefaultEndpoint {
     LOGGER.debug("INSIDE createProducer");
 
     // Camel Producers map to <to> route nodes.
-    Producer producer = new ContentProducer(this);
-
-    return producer;
+    return new ContentProducer(this);
   }
 
   @Override

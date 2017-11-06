@@ -34,6 +34,7 @@ import org.apache.camel.ServiceStatus;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.FromDefinition;
 import org.apache.camel.model.RouteDefinition;
+import org.apache.camel.model.ThreadsDefinition;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.util.ThreadContext;
@@ -64,6 +65,8 @@ public class ContentDirectoryMonitor implements DirectoryMonitor {
   private static final int MIN_READLOCK_INTERVAL_MILLISECONDS = 100;
 
   private static final Security SECURITY = Security.getInstance();
+  public static final String CONTENT_FRAMEWORK = "content:framework";
+  public static final String CATALOG_INPUTTRANSFORMER = "catalog:inputtransformer";
 
   private final int maxRetries;
 
@@ -373,25 +376,35 @@ public class ContentDirectoryMonitor implements DirectoryMonitor {
         // Set the readLockTimeout to 2 * readLockIntervalMilliseconds
         // Set the readLockCheckInterval to check every readLockIntervalMilliseconds
         boolean isDav = false;
+        List<String> toUris = new ArrayList<>();
 
         if (monitoredDirectory.startsWith("http")) {
           isDav = true;
+
+          if (processingMechanism.equals(IN_PLACE)) {
+            toUris.add(CATALOG_INPUTTRANSFORMER);
+            toUris.add(CATALOG_FRAMEWORK);
+          } else {
+            toUris.add(CONTENT_FRAMEWORK);
+          }
         } else {
-          stringBuilder.append("file:" + monitoredDirectory);
+          stringBuilder.append("file:").append(monitoredDirectory);
           stringBuilder.append("?recursive=true");
           stringBuilder.append("&moveFailed=.errors");
 
           /* ReadLock Configuration */
           stringBuilder.append("&readLockMinLength=1");
           stringBuilder.append("&readLock=changed");
-          stringBuilder.append("&readLockTimeout=" + (2 * readLockIntervalMilliseconds));
-          stringBuilder.append("&readLockCheckInterval=" + readLockIntervalMilliseconds);
+          stringBuilder.append("&readLockTimeout=").append(2 * readLockIntervalMilliseconds);
+          stringBuilder.append("&readLockCheckInterval=").append(readLockIntervalMilliseconds);
 
           /* File Exclusions */
           String exclusions = getBlackListAsRegex();
           if (StringUtils.isNotBlank(exclusions)) {
-            stringBuilder.append("&exclude=" + exclusions);
+            stringBuilder.append("&exclude=").append(exclusions);
           }
+
+          toUris.add(CONTENT_FRAMEWORK);
         }
 
         switch (processingMechanism) {
@@ -408,16 +421,21 @@ public class ContentDirectoryMonitor implements DirectoryMonitor {
             }
             break;
         }
-        LOGGER.trace("inbox = {}", stringBuilder.toString());
+
+        if (LOGGER.isTraceEnabled()) {
+          LOGGER.trace("inbox = {}", stringBuilder.toString());
+        }
 
         RouteDefinition routeDefinition = from(stringBuilder.toString());
-
         if (attributeOverrides != null) {
           routeDefinition.setHeader(Constants.ATTRIBUTE_OVERRIDES_KEY).constant(attributeOverrides);
         }
 
-        LOGGER.trace("About to process scheme content:framework");
-        routeDefinition.threads(numThreads).process(systemSubjectBinder).to("content:framework");
+        LOGGER.trace("About to process scheme " + toUris);
+        ThreadsDefinition td = routeDefinition.threads(numThreads).process(systemSubjectBinder);
+        for (String toUri : toUris) {
+          td.to(toUri);
+        }
       }
     };
   }

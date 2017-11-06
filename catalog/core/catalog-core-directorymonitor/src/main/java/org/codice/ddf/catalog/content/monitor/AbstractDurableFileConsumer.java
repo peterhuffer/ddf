@@ -88,6 +88,9 @@ public abstract class AbstractDurableFileConsumer extends GenericFileConsumer<Ev
     GenericFile<EventfulFileWrapper> genericFile = new GenericFile<>();
     genericFile.setEndpointPath(endpoint.getConfiguration().getDirectory());
     try {
+      if(file == null) {
+        genericFile.setFile(new EventfulFileWrapper(fileEvent, 1, null));
+      }
       if (file != null) {
         genericFile.setFile(new EventfulFileWrapper(fileEvent, 1, file.toPath()));
         genericFile.setAbsoluteFilePath(file.getCanonicalPath());

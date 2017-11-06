@@ -13,6 +13,8 @@
  */
 package org.codice.ddf.catalog.content.monitor;
 
+import static org.codice.ddf.catalog.content.monitor.ContentDirectoryMonitor.IN_PLACE;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;

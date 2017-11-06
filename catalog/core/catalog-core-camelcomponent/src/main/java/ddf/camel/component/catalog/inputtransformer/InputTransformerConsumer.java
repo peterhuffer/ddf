@@ -72,6 +72,6 @@ public class InputTransformerConsumer extends TransformerConsumer implements Inp
   @Override
   public Metacard transform(InputStream input, String id)
       throws IOException, CatalogTransformerException {
-    return transform(Metacard.class, input, new HashMap<String, Serializable>());
+    return transform(Metacard.class, input, new HashMap<>());
   }
 }

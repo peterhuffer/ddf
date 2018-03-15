@@ -423,7 +423,7 @@ public class ContentDirectoryMonitor implements DirectoryMonitor {
             break;
         }
 
-        LOGGER.debug("ContentDirectoryMonitor inbox = {}", stringBuilder.toString());
+        LOGGER.debug("ContentDirectoryMonitor inbox = {}", stringBuilder);
 
         RouteDefinition routeDefinition = from(stringBuilder.toString());
 

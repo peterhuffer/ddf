@@ -77,7 +77,7 @@ public class LocalResourceRetriever implements ResourceRetriever {
     }
 
     URI derivedUri = null;
-    Serializable serializable = props.get(ContentItem.QUALIFIER);
+    Serializable serializable = props.get(ContentItem.QUALIFIER_KEYWORD);
     if (serializable != null && serializable instanceof String) {
       LOGGER.debug(
           "Received qualifier in request properties, looking for qualified content on metacard with id [{}]",
@@ -103,7 +103,7 @@ public class LocalResourceRetriever implements ResourceRetriever {
           LOGGER.debug(
               "Found an acceptable resource reader ({}) for URI {}",
               reader.getId(),
-              resourceRetrievalUri.toASCIIString());
+              resourceRetrievalUri);
           resource = reader.retrieveResource(resourceRetrievalUri, props);
           if (resource != null) {
             break;

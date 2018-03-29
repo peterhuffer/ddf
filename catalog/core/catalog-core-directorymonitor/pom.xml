@@ -25,7 +25,7 @@
 
     <artifactId>catalog-core-directorymonitor</artifactId>
     <name>DDF :: Catalog :: Core :: Content Directory Monitor</name>
-    <packaging>bundle</packaging>
+    <packaging>jar</packaging>
 
     <properties>
         <pax.url.version>2.5.2</pax.url.version>
@@ -135,12 +135,6 @@
         <dependency>
             <groupId>ddf.catalog.core</groupId>
             <artifactId>catalog-core-camelcomponent</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>ddf.catalog.core</groupId>
-            <artifactId>catalog-core-camelcontext</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
@@ -311,35 +305,6 @@
     </dependencies>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <configuration>
-                    <instructions>
-                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-                        <Embed-Dependency>
-                            catalog-core-api-impl,
-                            ddf-security-common,
-                            platform-util,
-                            platform-util-unavailableurls,
-                            failsafe,
-                            hazelcast,
-                            sardine,
-                            httpclient,
-                            httpcore,
-                            commons-lang3
-                        </Embed-Dependency>
-                        <Import-Package>
-                            !org.eclipse.jetty.server.bio,
-                            !org.eclipse.jetty.server.ssl,
-                            !org.apache.tools.ant,
-                            !org.apache.tools.ant.types,
-                            org.apache.commons.io.comparator,
-                            *
-                        </Import-Package>
-                    </instructions>
-                </configuration>
-            </plugin>
             <plugin>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${maven-checkstyle-plugin.version}</version>

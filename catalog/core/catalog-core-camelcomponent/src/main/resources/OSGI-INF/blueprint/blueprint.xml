@@ -28,7 +28,7 @@
     <!--
     Instantiate our custom Camel CatalogComponent and inject this bundle context into it.  
     -->
-    <bean id="catalogComponent" class="ddf.camel.component.catalog.CatalogComponent">
+    <bean id="catalog" class="ddf.camel.component.catalog.CatalogComponent">
 		<property name="bundleContext" ref="blueprintBundleContext"/>
 		<property name="mimeTypeToTransformerMapper" ref="transformerMapper"/>
         <property name="catalogFramework" ref="framework"/>
@@ -39,7 +39,7 @@
     -->
     <bean id="catalogComponentResolver"
           class="ddf.camel.component.catalog.CatalogComponentResolver">
-	    <argument ref="catalogComponent"/>
+	    <argument ref="catalog"/>
 	</bean>
 
     <!--
@@ -57,7 +57,7 @@
     <!--
     Instantiate our custom Camel ContentComponent and inject this bundle context into it.
     -->
-    <bean id="contentComponent" class="ddf.camel.component.catalog.content.ContentComponent">
+    <bean id="content" class="ddf.camel.component.catalog.content.ContentComponent">
         <property name="catalogFramework" ref="framework"/>
         <property name="mimeTypeMapper" ref="mimeTypeMapper"/>
         <property name="uuidGenerator" ref="uuidGenerator"/>
@@ -68,7 +68,7 @@
     -->
     <bean id="contentComponentResolver"
           class="ddf.camel.component.catalog.content.ContentComponentResolver">
-        <argument ref="contentComponent"/>
+        <argument ref="content"/>
     </bean>
 
     <!--

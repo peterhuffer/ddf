@@ -27,7 +27,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.codice.ddf.catalog.content.monitor.ContentDirectoryMonitor;
-import org.codice.ddf.catalog.harvest.Adapter;
+import org.codice.ddf.catalog.harvest.StorageAdapter;
 import org.codice.ddf.catalog.harvest.file.DirectoryHarvester;
 import org.codice.ddf.catalog.harvest.listeners.PersistentListener;
 import org.codice.ddf.catalog.harvest.webdav.WebDavHarvester;
@@ -46,7 +46,7 @@ public class HarvesterManager {
 
   private final CamelContext camelContext;
 
-  private final Adapter metacardOnlyAdapter;
+  private final StorageAdapter metacardOnlyAdapter;
 
   private Map<String, Serializable> attributeOverrides = new HashMap<>();
 
@@ -64,7 +64,7 @@ public class HarvesterManager {
 
   private ContentDirectoryMonitor contentDirectoryMonitor = null;
 
-  public HarvesterManager(Adapter adapter, CamelContext camelContext) {
+  public HarvesterManager(StorageAdapter adapter, CamelContext camelContext) {
     Validate.notNull(adapter, "argument {adapter} may not be null");
     Validate.notNull(camelContext, "argument {camelContext} may not be null");
 
@@ -111,8 +111,10 @@ public class HarvesterManager {
 
   private void createInPlaceHarvester(String location) {
     if (monitoredLocation.startsWith(HTTP)) {
-      webDavHarvester = new WebDavHarvester(location);
-      webDavHarvester.registerListener(new PersistentListener(metacardOnlyAdapter, location));
+      webDavHarvester =
+          new WebDavHarvester(
+              location,
+              Collections.singleton(new PersistentListener(metacardOnlyAdapter, location)));
     } else {
       inPlaceDirectoryHarvester =
           new DirectoryHarvester(

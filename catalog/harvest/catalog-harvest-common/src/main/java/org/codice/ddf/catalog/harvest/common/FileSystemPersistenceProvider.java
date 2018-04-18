@@ -70,7 +70,8 @@ public class FileSystemPersistenceProvider
     this.persistencePath = persistencePath;
     File dir = new File(getPersistencePath());
     if (!dir.exists() && !dir.mkdir()) {
-      LOGGER.debug("Unable to create directory: {}", dir.getAbsolutePath());
+      throw new IllegalArgumentException(
+          String.format("Unable to create persistence directory for [%s]", dir.getAbsoluteFile()));
     }
   }
 
@@ -101,13 +102,15 @@ public class FileSystemPersistenceProvider
       boolean created = dir.mkdirs();
       if (created || dir.exists()) {
         LOGGER.trace("Entering: store - key: {}", key);
-        try (OutputStream file =
-                new FileOutputStream(getMapStorePath() + key + PERSISTED_FILE_SUFFIX);
+        try (OutputStream file = new FileOutputStream(getPersistedFilePathForKey(key));
             OutputStream buffer = new BufferedOutputStream(file);
             ObjectOutputStream output = new ObjectOutputStream(buffer)) {
           output.writeObject(value);
         } catch (IOException e) {
           LOGGER.debug("IOException storing value in cache with key = " + key, e);
+          LOGGER.warn(
+              "Error storing value in cache with key [{}]. Turn logging to debug for more info.",
+              key);
         }
       } else {
         LOGGER.debug("Unable to create directory: {}", dir.getAbsolutePath());
@@ -124,12 +127,15 @@ public class FileSystemPersistenceProvider
 
   @Override
   public void delete(String key) {
-    File file = new File(getMapStorePath() + key + PERSISTED_FILE_SUFFIX);
+    File file = new File(getPersistedFilePathForKey(key));
     if (file.exists()) {
       try {
         Files.delete(file.toPath());
       } catch (IOException e) {
-        LOGGER.debug("File was unable to be deleted: {}", file.getAbsolutePath());
+        LOGGER.debug("File was unable to be deleted: {}", file.getAbsolutePath(), e);
+        LOGGER.warn(
+            "Unable to remove file [{}]. Turn logging to debug for more info.",
+            file.getAbsolutePath());
       }
     }
   }
@@ -150,13 +156,12 @@ public class FileSystemPersistenceProvider
   }
 
   public Object loadFromPersistence(String key) {
-    File file = new File(getMapStorePath() + key + PERSISTED_FILE_SUFFIX);
+    File file = new File(getPersistedFilePathForKey(key));
     if (!file.exists()) {
       return null;
     }
 
-    try (InputStream inputStream =
-        new FileInputStream(getMapStorePath() + key + PERSISTED_FILE_SUFFIX)) {
+    try (InputStream inputStream = new FileInputStream(getPersistedFilePathForKey(key))) {
       InputStream buffer = new BufferedInputStream(inputStream);
       try (ObjectInput input = new ObjectInputStream(buffer)) {
         return input.readObject();
@@ -205,6 +210,10 @@ public class FileSystemPersistenceProvider
     return keys;
   }
 
+  private String getPersistedFilePathForKey(String key) {
+    return getMapStorePath() + key + PERSISTED_FILE_SUFFIX;
+  }
+
   public void clear() {
     File[] files = new File(getMapStorePath()).listFiles(getFilenameFilter());
     if (files != null) {
@@ -212,7 +221,10 @@ public class FileSystemPersistenceProvider
         try {
           Files.delete(file.toPath());
         } catch (IOException e) {
-          LOGGER.debug("File was unable to be deleted: {}", file.getAbsolutePath());
+          LOGGER.debug("File was unable to be deleted: {}", file.getAbsolutePath(), e);
+          LOGGER.warn(
+              "Unable to delete file [{}]. Turn logging to debug for more info.",
+              file.getAbsolutePath());
         }
       }
     }

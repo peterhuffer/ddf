@@ -17,21 +17,28 @@ package org.codice.ddf.catalog.harvest;
  * A {@code Harvester} is responsible for fetching remote resources and notifying any registered
  * {@link Listener}s of create, update and delete events.
  *
- * <p>In the event that a {@code Harvester} goes down, it must remember the last state of the
- * external server it was harvesting from. Upon a {@code Harvester} coming back up, it should only
- * notify registered listener of new events.
+ * <p>In the event that a {@code Harvester} goes down, it should make a best effort to remember the
+ * last state of the external server it was harvesting from. Upon a {@code Harvester} coming back
+ * up, it should notify registered {@link Listener}s of new events.
+ *
+ * <p><b> This code is experimental. While this class is functional and tested, it may change or be
+ * removed in a future version of the library. </b>
  */
 public interface Harvester {
 
   /**
-   * Registers a new {@link Listener} to receive events from the remote server being harvested from.
+   * Registers a new {@link Listener} to receive events from the remote source being harvested from.
+   * Newly {@link Listener}s will only receive new events from this {@code Harvester}.
    *
    * @param listener the {@link Listener} to register
+   * @throws IllegalArgumentException if the {@link Listener} is already registered or cannot be
+   *     registered
    */
   void registerListener(Listener listener);
 
   /**
-   * Unregisters a {@link Listener}.
+   * Unregisters a {@link Listener}. Un-registering a {@link Listener} that isn't registered should
+   * be a no-op.
    *
    * @param listener the {@link Listener} to unregister
    */

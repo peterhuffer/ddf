@@ -14,11 +14,20 @@
 package org.codice.ddf.catalog.harvest.file;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Set;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
+import org.codice.ddf.catalog.harvest.HarvestedResource;
 import org.codice.ddf.catalog.harvest.Listener;
+import org.codice.ddf.catalog.harvest.common.HarvestedFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DirectoryHarvesterListenerAdaptor extends FileAlterationListenerAdaptor {
+
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(DirectoryHarvesterListenerAdaptor.class);
 
   private final Set<Listener> listeners;
 
@@ -28,16 +37,34 @@ public class DirectoryHarvesterListenerAdaptor extends FileAlterationListenerAda
 
   @Override
   public void onFileCreate(final File file) {
-    listeners.forEach(listener -> listener.onCreate(new LazyHarvestedFile(file)));
+    HarvestedResource harvestedResource = createHarvestedResource(file);
+    if (harvestedResource != null) {
+      listeners.forEach(listener -> listener.onCreate(harvestedResource));
+    }
   }
 
   @Override
   public void onFileChange(final File file) {
-    listeners.forEach(listener -> listener.onUpdate(new LazyHarvestedFile(file)));
+    HarvestedResource harvestedResource = createHarvestedResource(file);
+    if (harvestedResource != null) {
+      listeners.forEach(listener -> listener.onUpdate(harvestedResource));
+    }
   }
 
   @Override
   public void onFileDelete(final File file) {
-    listeners.forEach(listener -> listener.onDelete(new LazyHarvestedFile(file)));
+    listeners.forEach(listener -> listener.onDelete(file.toURI().toASCIIString()));
+  }
+
+  private HarvestedResource createHarvestedResource(File file) {
+    try {
+      return new HarvestedFile(
+          new FileInputStream(file), file.getName(), file.toURI().toASCIIString());
+    } catch (FileNotFoundException e) {
+      LOGGER.debug(
+          "Failed to get input stream from file [{}]. Create event will not be sent to listener",
+          file.toURI());
+      return null;
+    }
   }
 }

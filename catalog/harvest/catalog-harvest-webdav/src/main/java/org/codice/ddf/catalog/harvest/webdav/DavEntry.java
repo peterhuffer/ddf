@@ -145,7 +145,7 @@ public class DavEntry implements Serializable {
               url.getRef());
       location = uri.toASCIIString();
     } catch (MalformedURLException | URISyntaxException e) {
-      throw new RuntimeException(e);
+      throw new IllegalArgumentException(String.format("Invalid location [%s]", location), e);
     }
     return location;
   }

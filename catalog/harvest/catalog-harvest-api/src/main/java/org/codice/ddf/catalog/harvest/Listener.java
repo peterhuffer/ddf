@@ -13,30 +13,37 @@
  */
 package org.codice.ddf.catalog.harvest;
 
-/** Responds to events from a {@link Harvester}. */
+/**
+ * Responds to events from a {@link Harvester}. <b>{@code Listener}s are idempotent, receiving the
+ * same create, update, or delete event multiple times has no effect.</b>
+ *
+ * <p>{@link Harvester}s may thread out calls to {@code Listener}s if needed, so {@code Listener}s
+ * don't have to.
+ *
+ * <p><b> This code is experimental. While this class is functional and tested, it may change or be
+ * removed in a future version of the library. </b>
+ */
 public interface Listener {
 
   /**
-   * Called when a {@link Harvester} receives a newly created file on a remote server.
+   * Called when a {@link Harvester} receives a newly created file on a remote source.
    *
-   * @param resource the {@link HarvestedResource} created on the remote server
+   * @param resource the {@link HarvestedResource} created on the remote source
    */
   void onCreate(HarvestedResource resource);
 
   /**
-   * Called when a {@link Harvester} receives an updated file on a remote server.
+   * Called when a {@link Harvester} receives an updated file on a remote source.
    *
-   * @param resource the {@link HarvestedResource} updated on the remote server
+   * @param resource the {@link HarvestedResource} updated on the remote source
    */
   void onUpdate(HarvestedResource resource);
 
   /**
-   * Called when a {@link Harvester} receives a deleted file on a remote server. On a delete event,
-   * the resource will not be available, as it has already been deleted. {@link Listener}s should
-   * use the {@link HarvestedResource#getCorrelationId()} method to identify the current resource
-   * being processed.
+   * Called when a {@link Harvester} receives a deleted file on a remote source. On a delete event,
+   * the resource may not be available.
    *
-   * @param resource the {@link HarvestedResource} deleted on the remote server
+   * @param uri of the {@link HarvestedResource} deleted on the remote source
    */
-  void onDelete(HarvestedResource resource);
+  void onDelete(String uri);
 }

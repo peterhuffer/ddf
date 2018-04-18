@@ -20,7 +20,7 @@
 
     <camelContext xmlns="http://camel.apache.org/schema/blueprint" id="camelContext"/>
 
-    <reference id="metacardOnlyAdapter" interface="org.codice.ddf.catalog.harvest.Adapter"/>
+    <reference id="metacardOnlyAdapter" interface="org.codice.ddf.catalog.harvest.StorageAdapter"/>
 
     <cm:managed-service-factory
         id="contentMonitor_MSF"
@@ -30,7 +30,7 @@
                               init-method="init" destroy-method="destroy">
             <argument ref="metacardOnlyAdapter"/>
             <argument ref="camelContext"/>
-            <property name="processingMechanism" value="in_place"/>
+            <property name="processingMechanism" value="delete"/>
             <property name="numThreads" value="1"/>
             <property name="readLockIntervalMilliseconds" value="500"/>
             <property name="monitoredLocation" value=""/>

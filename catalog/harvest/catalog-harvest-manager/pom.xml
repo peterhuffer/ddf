@@ -65,12 +65,11 @@
         <dependency>
             <groupId>com.github.lookfirst</groupId>
             <artifactId>sardine</artifactId>
-            <version>5.7</version>
+            <version>${sardine.version}</version>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
-            <version>3.2.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>

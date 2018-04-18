@@ -386,8 +386,7 @@ public class ContentDirectoryMonitorTest extends CamelTestSupport {
   }
 
   private ContentDirectoryMonitor createContentDirectoryMonitor() {
-    ContentDirectoryMonitor monitor =
-        new ContentDirectoryMonitor(camelContext, 1, 1, Runnable::run);
+    ContentDirectoryMonitor monitor = new ContentDirectoryMonitor(camelContext, Runnable::run);
     monitor.systemSubjectBinder = exchange -> {};
     monitor.setNumThreads(1);
     monitor.setReadLockIntervalMilliseconds(1000);

@@ -15,13 +15,19 @@ package org.codice.ddf.catalog.harvest.webdav;
 
 import com.github.sardine.Sardine;
 import com.github.sardine.SardineFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.Validate;
+import org.codice.ddf.catalog.harvest.HarvestedResource;
 import org.codice.ddf.catalog.harvest.Harvester;
 import org.codice.ddf.catalog.harvest.Listener;
 import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
+import org.codice.ddf.catalog.harvest.common.HarvestedFile;
 import org.codice.ddf.catalog.harvest.common.PollingHarvester;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,14 +53,16 @@ public class WebDavHarvester extends PollingHarvester {
    * Creates a WebDav {@link Harvester} which will harvest products from the provided address.
    *
    * @param address http URL WebDav address
+   * @param initialListeners {@link Listener}s to register to this harvester
    */
-  public WebDavHarvester(String address) {
+  public WebDavHarvester(String address, Set<Listener> initialListeners) {
     super(5L);
     Validate.notEmpty(address, "address {location} cannot be empty");
 
     persistenceProvider = new FileSystemPersistenceProvider("harvest/webdav");
     webdavListener = new HarvestedResourceListener();
 
+    initialListeners.forEach(this::registerListener);
     persistentKey = DigestUtils.sha1Hex(address);
     observer = getCachedObserverOrCreate(persistentKey, address);
 
@@ -62,20 +70,15 @@ public class WebDavHarvester extends PollingHarvester {
   }
 
   private DavAlterationObserver getCachedObserverOrCreate(String key, String rootEntryLocation) {
-    DavAlterationObserver davObserver = null;
     if (persistenceProvider.loadAllKeys().contains(key)) {
-      LOGGER.debug(
+      LOGGER.trace(
           "existing webdav observer for persistence key [{}] found, loading observer", key);
-      observer = (DavAlterationObserver) persistenceProvider.loadFromPersistence(key);
+      return (DavAlterationObserver) persistenceProvider.loadFromPersistence(key);
     }
 
-    if (davObserver == null) {
-      LOGGER.debug(
-          "no existing webdav observer for persistence key [{}], creating new observer", key);
-      davObserver = new DavAlterationObserver(new DavEntry(rootEntryLocation));
-    }
-
-    return davObserver;
+    LOGGER.trace(
+        "no existing webdav observer for persistence key [{}], creating new observer", key);
+    return new DavAlterationObserver(new DavEntry(rootEntryLocation));
   }
 
   @Override
@@ -88,6 +91,10 @@ public class WebDavHarvester extends PollingHarvester {
 
   @Override
   public void registerListener(Listener listener) {
+    if (!listeners.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Only 1 registered listener is currently supported for this harvester.");
+    }
     listeners.add(listener);
   }
 
@@ -104,7 +111,10 @@ public class WebDavHarvester extends PollingHarvester {
 
     @Override
     public void onFileCreate(DavEntry entry) {
-      listeners.forEach(listener -> listener.onCreate(new HarvestedWebdavResource(entry)));
+      HarvestedResource harvestedResource = createHarvestedResource(entry);
+      if (harvestedResource != null) {
+        listeners.forEach(listener -> listener.onCreate(harvestedResource));
+      }
     }
 
     @Override
@@ -114,7 +124,10 @@ public class WebDavHarvester extends PollingHarvester {
 
     @Override
     public void onFileChange(DavEntry entry) {
-      listeners.forEach(listener -> listener.onUpdate(new HarvestedWebdavResource(entry)));
+      HarvestedResource harvestedResource = createHarvestedResource(entry);
+      if (harvestedResource != null) {
+        listeners.forEach(listener -> listener.onUpdate(harvestedResource));
+      }
     }
 
     @Override
@@ -124,7 +137,27 @@ public class WebDavHarvester extends PollingHarvester {
 
     @Override
     public void onFileDelete(DavEntry entry) {
-      listeners.forEach(listener -> listener.onDelete(new HarvestedWebdavResource(entry)));
+      listeners.forEach(listener -> listener.onDelete(entry.getLocation()));
+    }
+
+    private HarvestedResource createHarvestedResource(DavEntry entry) {
+      File file;
+      try {
+        file = entry.getFile(SardineFactory.begin());
+      } catch (IOException e) {
+        LOGGER.debug(
+            "Error retrieving dav file [{}]. File won't be processed.", entry.getLocation(), e);
+        return null;
+      }
+
+      try {
+        return new HarvestedFile(new FileInputStream(file), file.getName(), entry.getLocation());
+      } catch (FileNotFoundException e) {
+        LOGGER.debug(
+            "Failed to get input stream from file [{}]. Event will not be sent to listener",
+            file.toURI());
+        return null;
+      }
     }
   }
 }

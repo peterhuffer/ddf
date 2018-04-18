@@ -15,54 +15,83 @@ package org.codice.ddf.catalog.harvest.listeners;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
-import org.codice.ddf.catalog.harvest.Adapter;
+import org.codice.ddf.catalog.harvest.HarvestException;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
 import org.codice.ddf.catalog.harvest.Listener;
+import org.codice.ddf.catalog.harvest.StorageAdapter;
 import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PersistentListener implements Listener {
 
-  private final Adapter adapter;
+  private static final Logger LOGGER = LoggerFactory.getLogger(PersistentListener.class);
+
+  private final StorageAdapter adapter;
 
   private final FileSystemPersistenceProvider persistenceProvider;
 
-  public PersistentListener(Adapter adapter, String persistenceName) {
+  public PersistentListener(StorageAdapter adapter, String pid) {
     this.adapter = adapter;
     persistenceProvider =
-        new FileSystemPersistenceProvider(
-            "harvest/persistent/" + DigestUtils.sha1Hex(persistenceName));
+        new FileSystemPersistenceProvider("harvest/persistent/" + DigestUtils.sha1Hex(pid));
   }
 
   @Override
   public void onCreate(HarvestedResource resource) {
-    String id = adapter.create(resource);
+    String key = DigestUtils.sha1Hex(resource.getUri().toASCIIString());
+    if (resourceNotCreated(key)) {
+      String resourceId = null;
+      try {
+        resourceId = adapter.create(resource);
+      } catch (HarvestException e) {
+        LOGGER.debug("Failed to create resource [{}].", resource.getName(), e);
+      }
 
-    if (StringUtils.isNotEmpty(id)) {
-      persistenceProvider.store(resource.getCorrelationId(), id);
+      if (StringUtils.isNotEmpty(resourceId)) {
+        persistenceProvider.store(key, resourceId);
+      }
+    } else {
+      LOGGER.debug("Already created resource [{}]. Doing nothing", resource.getName());
     }
   }
 
   @Override
   public void onUpdate(HarvestedResource resource) {
-    String resourceId = getResourceId(resource.getCorrelationId());
+    String key = DigestUtils.sha1Hex(resource.getUri().toASCIIString());
+    String resourceId = getResourceId(key);
 
     if (StringUtils.isNotEmpty(resourceId)) {
-      String newResourceId = adapter.update(resource, resourceId);
-
-      if (StringUtils.isNotEmpty(newResourceId)) {
-        persistenceProvider.store(resource.getCorrelationId(), newResourceId);
+      try {
+        adapter.update(resource, resourceId);
+      } catch (HarvestException e) {
+        LOGGER.debug(
+            "Failed to update resource [{}] using id [{}].", resource.getName(), resourceId, e);
       }
     }
   }
 
   @Override
-  public void onDelete(HarvestedResource resource) {
-    String correlationId = resource.getCorrelationId();
-    String resourceId = getResourceId(correlationId);
+  public void onDelete(String uri) {
+    String key = DigestUtils.sha1Hex(uri);
+    String resourceId = getResourceId(key);
 
-    if (StringUtils.isNotEmpty(resourceId) && adapter.delete(resourceId)) {
-      persistenceProvider.delete(correlationId);
+    if (StringUtils.isNotEmpty(resourceId)) {
+      try {
+        adapter.delete(resourceId);
+        persistenceProvider.delete(key);
+      } catch (HarvestException e) {
+        LOGGER.debug(
+            "Failed to delete resource with uri [{}] using id [{}]. Resources in this listener's cache may be out of sync.",
+            uri,
+            resourceId,
+            e);
+      }
     }
+  }
+
+  private boolean resourceNotCreated(String resourcePid) {
+    return StringUtils.isEmpty(getResourceId(resourcePid));
   }
 
   private String getResourceId(String key) {

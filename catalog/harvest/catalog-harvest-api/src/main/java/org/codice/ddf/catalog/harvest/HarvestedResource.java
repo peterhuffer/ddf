@@ -17,17 +17,15 @@ import ddf.catalog.resource.Resource;
 import java.net.URI;
 import java.util.Map;
 
-/** A resource harvested from an external data store. */
-public interface HarvestedResource {
+/**
+ * A resource harvested from an external data store.
+ *
+ * <p><b> This code is experimental. While this class is functional and tested, it may change or be
+ * removed in a future version of the library. </b>
+ */
+public interface HarvestedResource extends Resource {
 
   Map<String, Object> getProperties();
-
-  /**
-   * A globally unique identifier for this {@code HarvestedResource}.
-   *
-   * @return a globally unique identifier
-   */
-  String getCorrelationId();
 
   /**
    * The location of this {@code HarvestedResource}.
@@ -35,11 +33,4 @@ public interface HarvestedResource {
    * @return a uri
    */
   URI getUri();
-
-  /**
-   * A {@link Resource} representing the contents of this {@code HarvestedResource}.
-   *
-   * @return the {@link Resource}
-   */
-  Resource getResource();
 }

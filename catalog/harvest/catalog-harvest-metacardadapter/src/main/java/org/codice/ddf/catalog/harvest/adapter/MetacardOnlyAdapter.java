@@ -38,14 +38,15 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.Validate;
-import org.codice.ddf.catalog.harvest.Adapter;
+import org.codice.ddf.catalog.harvest.HarvestException;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
+import org.codice.ddf.catalog.harvest.StorageAdapter;
 import org.codice.ddf.security.common.Security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Harvester {@link Adapter} for creating {@link Metacard}s in the catalog. */
-public class MetacardOnlyAdapter implements Adapter {
+/** Harvester {@link StorageAdapter} for creating {@link Metacard}s in the catalog. */
+public class MetacardOnlyAdapter implements StorageAdapter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MetacardOnlyAdapter.class);
 
@@ -67,14 +68,15 @@ public class MetacardOnlyAdapter implements Adapter {
   }
 
   @Override
-  public String create(HarvestedResource resource) {
+  public String create(HarvestedResource resource) throws HarvestException {
     Metacard metacard = harvestedResourceTransformer.transformHarvestedResource(resource);
 
     if (metacard == null) {
       LOGGER.debug(
-          "No valid input transformer found for resource [{}]. Resource will not be processed.",
-          resource.getResource().getName());
-      return null;
+          "Unable to transform resource [{}] to a metacard. Resource will not be processed.",
+          resource.getName());
+      throw new HarvestException(
+          String.format("Unable to transform resource [%s].", resource.getName()));
     }
 
     CreateRequest createRequest =
@@ -82,8 +84,8 @@ public class MetacardOnlyAdapter implements Adapter {
 
     return runWithSubjectOrDefault(
         () -> {
-          CreateResponse response;
           try {
+            CreateResponse response;
             response = catalogFramework.create(createRequest);
 
             List<Metacard> createdMetacards = response.getCreatedMetacards();
@@ -91,35 +93,40 @@ public class MetacardOnlyAdapter implements Adapter {
               return createdMetacards.get(0).getId();
             } else {
               LOGGER.debug(
-                  "Received {} metacards for a single created resource.", createdMetacards.size());
-              return null;
+                  "Received multiple metacards for a single created resource. [{}].",
+                  createdMetacards);
+              throw new HarvestException(
+                  String.format(
+                      "Multiple metacards returned for single create for resource [%s]",
+                      resource.getName()));
             }
           } catch (IngestException | SourceUnavailableException e) {
-            LOGGER.debug("Failed to ingest resource [{}].", resource.getResource().getName(), e);
-            return null;
+            LOGGER.debug("Failed to ingest resource [{}].", resource.getName(), e);
+            throw new HarvestException(
+                String.format("Failed to create resource [%s]", resource.getName()), e);
           }
-        },
-        null);
+        });
   }
 
   @Override
-  public String update(HarvestedResource resource, String updateId) {
+  public void update(HarvestedResource resource, String updateId) throws HarvestException {
     Metacard metacard = harvestedResourceTransformer.transformHarvestedResource(resource, updateId);
 
     if (metacard == null) {
       LOGGER.debug(
-          "No valid input transformer found for resource [{}] with update id [{}]. Resource will not be processed.",
-          resource.getResource().getName(),
+          "Unable to transform resource [{}] with update id [{}]. Resource will not be processed.",
+          resource.getName(),
           updateId);
-      return null;
+      throw new HarvestException(
+          String.format("Unable to transform resource [%s]", resource.getName()));
     }
 
     UpdateRequest updateRequest = new UpdateRequestImpl(updateId, metacard);
 
-    return runWithSubjectOrDefault(
+    runWithSubjectOrDefault(
         () -> {
-          UpdateResponse response;
           try {
+            UpdateResponse response;
             response = catalogFramework.update(updateRequest);
 
             List<String> updatedMetacardIds =
@@ -133,49 +140,55 @@ public class MetacardOnlyAdapter implements Adapter {
               return updatedMetacardIds.get(0);
             } else {
               LOGGER.debug(
-                  "Received {} metacards for a single updated resource.",
-                  updatedMetacardIds.size());
-              return null;
+                  "Received {} metacards for a single updated resource. [{}]",
+                  updatedMetacardIds.size(),
+                  updatedMetacardIds);
+              throw new HarvestException(
+                  String.format(
+                      "Multiple metacards returned for single update for resource [%s]",
+                      resource.getName()));
             }
           } catch (IngestException | SourceUnavailableException e) {
-            LOGGER.debug("Failed to update resource [{}].", resource.getResource().getName(), e);
-            return null;
+            LOGGER.debug("Failed to update resource [{}].", resource.getName(), e);
+            throw new HarvestException(
+                String.format("Failed to update resource [%s]", resource.getName()), e);
           }
-        },
-        null);
+        });
   }
 
   @Override
-  public boolean delete(String id) {
+  public void delete(String id) {
     DeleteRequest deleteRequest = new DeleteRequestImpl(id);
 
-    return runWithSubjectOrDefault(
+    runWithSubjectOrDefault(
         () -> {
           try {
             DeleteResponse response = catalogFramework.delete(deleteRequest);
 
             if (response.getDeletedMetacards().isEmpty()) {
-              LOGGER.debug("Failed to delete harvested resource with id [{}]", id);
-              return false;
+              LOGGER.debug("No metacards retrieved from catalog delete request for id [{}].", id);
+              throw new HarvestException(
+                  String.format(
+                      "No metacards retrieved from catalog delete request for id [%s]", id));
             }
           } catch (IngestException | SourceUnavailableException e) {
             LOGGER.debug("Failed to delete harvested resource with id [{}].", id, e);
-            return false;
+            throw new HarvestException(
+                String.format("Failed to delete harvested resource with id [%s]", id), e);
           }
 
-          return true;
-        },
-        false);
+          return null;
+        });
   }
 
-  private <T> T runWithSubjectOrDefault(final Callable<T> callable, final T defaultValue) {
+  private <T> T runWithSubjectOrDefault(final Callable<T> callable) {
     return SECURITY.runAsAdmin(
         () -> {
           try {
             return SECURITY.runWithSubjectOrElevate(callable);
           } catch (SecurityServiceException | InvocationTargetException e) {
             LOGGER.debug("Error executing code with subject", e);
-            return defaultValue;
+            return null;
           }
         });
   }

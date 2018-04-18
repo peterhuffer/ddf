@@ -31,5 +31,5 @@
         <argument ref="harvestedResourceTransformer"/>
     </bean>
 
-    <service ref="metacardOnlyAdapter" interface="org.codice.ddf.catalog.harvest.Adapter"/>
+    <service ref="metacardOnlyAdapter" interface="org.codice.ddf.catalog.harvest.StorageAdapter"/>
 </blueprint>

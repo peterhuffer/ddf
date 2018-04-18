@@ -30,7 +30,7 @@ public class DirectoryHarvester extends PollingHarvester {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DirectoryHarvester.class);
 
-  private static final long DEFAULT_POLL_INTERVAL = 5000;
+  private static final long DEFAULT_POLL_INTERVAL = 5;
 
   private final Set<Listener> listeners = new HashSet<>();
 
@@ -71,7 +71,7 @@ public class DirectoryHarvester extends PollingHarvester {
     validateDirectory(dir);
     persistenceKey = DigestUtils.sha1Hex(dir);
 
-    listeners.addAll(inititialListeners);
+    inititialListeners.forEach(this::registerListener);
     fileSystemPersistenceProvider = new FileSystemPersistenceProvider("harvest/directory");
     fileAlterationObserver = getCachedObserverOrCreate(persistenceKey, dir);
     fileListener = new DirectoryHarvesterListenerAdaptor(listeners);
@@ -80,19 +80,13 @@ public class DirectoryHarvester extends PollingHarvester {
   }
 
   private FileAlterationObserver getCachedObserverOrCreate(String key, String dir) {
-    FileAlterationObserver observer = null;
     if (fileSystemPersistenceProvider.loadAllKeys().contains(key)) {
-      LOGGER.debug("existing file observer for persistence key [{}] found, loading observer", key);
-      observer = (FileAlterationObserver) fileSystemPersistenceProvider.loadFromPersistence(key);
+      LOGGER.trace("existing file observer for persistence key [{}] found, loading observer", key);
+      return (FileAlterationObserver) fileSystemPersistenceProvider.loadFromPersistence(key);
     }
 
-    if (observer == null) {
-      LOGGER.debug(
-          "no existing file observer for persistence key [{}], creating new observer", key);
-      observer = new FileAlterationObserver(dir);
-    }
-
-    return observer;
+    LOGGER.trace("no existing file observer for persistence key [{}], creating new observer", key);
+    return new FileAlterationObserver(dir);
   }
 
   @Override
@@ -105,6 +99,10 @@ public class DirectoryHarvester extends PollingHarvester {
 
   @Override
   public void registerListener(Listener listener) {
+    if (!listeners.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Only 1 registered listener is currently supported for this harvester.");
+    }
     listeners.add(listener);
   }
 

@@ -31,6 +31,7 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.RouteDefinition;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.shiro.util.ThreadContext;
 import org.codice.ddf.platform.util.StandardThreadFactoryBuilder;
 import org.codice.ddf.security.common.Security;
@@ -180,7 +181,7 @@ public class ContentDirectoryMonitor {
 
   private Object configure() {
     if (StringUtils.isEmpty(monitoredDirectory)) {
-      throw new IllegalArgumentException("Property {monitoredDirectory} cannot be empty");
+      Validate.notBlank(monitoredDirectory, "Property {monitoredDirectory} cannot be empty");
     }
 
     CompletableFuture.runAsync(this::attemptAddRoutes, configurationExecutor);
@@ -272,7 +273,7 @@ public class ContentDirectoryMonitor {
     }
 
     if (CollectionUtils.isNotEmpty(badFiles)) {
-      patterns.addAll(new ArrayList<>(badFiles));
+      patterns.addAll(badFiles);
     }
 
     if (CollectionUtils.isEmpty(patterns)) {

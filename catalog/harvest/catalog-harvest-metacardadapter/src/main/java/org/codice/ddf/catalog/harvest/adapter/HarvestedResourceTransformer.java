@@ -78,21 +78,22 @@ public class HarvestedResourceTransformer {
   }
 
   private Metacard transform(HarvestedResource harvestedResource, String metacardId) {
-    Resource resource = harvestedResource.getResource();
-    MimeType resourceMimeType = resource.getMimeType();
+    MimeType resourceMimeType = harvestedResource.getMimeType();
 
     Metacard metacard = null;
 
     try (TemporaryFileBackedOutputStream tfbos = new TemporaryFileBackedOutputStream()) {
-      IOUtils.copy(resource.getInputStream(), tfbos);
+      IOUtils.copy(harvestedResource.getInputStream(), tfbos);
       if (resourceMimeType == null) {
         resourceMimeType =
             guessMimeTypeFor(
-                tfbos.asByteSource().openStream(), FilenameUtils.getExtension(resource.getName()));
+                tfbos.asByteSource().openStream(),
+                FilenameUtils.getExtension(harvestedResource.getName()));
       }
 
       metacard =
-          doTransform(resourceMimeType, tfbos.asByteSource().openStream(), resource, metacardId);
+          doTransform(
+              resourceMimeType, tfbos.asByteSource().openStream(), harvestedResource, metacardId);
 
       if (metacard != null) {
         enrichMetacard(metacard, harvestedResource);
@@ -105,9 +106,9 @@ public class HarvestedResourceTransformer {
   }
 
   private void enrichMetacard(Metacard metacard, HarvestedResource harvestedResource) {
-    Resource resource = harvestedResource.getResource();
-    writeMetacardAttribute(metacard, Core.TITLE, resource.getName());
-    writeMetacardAttribute(metacard, Core.RESOURCE_SIZE, Long.toString(resource.getSize()));
+    writeMetacardAttribute(metacard, Core.TITLE, harvestedResource.getName());
+    writeMetacardAttribute(
+        metacard, Core.RESOURCE_SIZE, Long.toString(harvestedResource.getSize()));
     writeMetacardAttribute(metacard, Core.RESOURCE_URI, harvestedResource.getUri().toASCIIString());
   }
 

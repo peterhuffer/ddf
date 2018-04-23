@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import org.codice.ddf.configuration.AbsolutePathResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,9 +56,9 @@ public class FileSystemPersistenceProvider
 
   private static final String PERSISTED_FILE_SUFFIX_REGEX = "\\.ser";
 
-  private String persistencePath;
+  private final String persistencePath;
 
-  private String mapName = "default";
+  private final String mapName;
 
   private FilenameFilter filter;
 
@@ -107,7 +108,7 @@ public class FileSystemPersistenceProvider
             ObjectOutputStream output = new ObjectOutputStream(buffer)) {
           output.writeObject(value);
         } catch (IOException e) {
-          LOGGER.debug("IOException storing value in cache with key = " + key, e);
+          LOGGER.debug("IOException storing value in cache with key = {}", key, e);
           LOGGER.warn(
               "Error storing value in cache with key [{}]. Turn logging to debug for more info.",
               key);
@@ -155,6 +156,7 @@ public class FileSystemPersistenceProvider
     return null;
   }
 
+  @Nullable
   public Object loadFromPersistence(String key) {
     File file = new File(getPersistedFilePathForKey(key));
     if (!file.exists()) {

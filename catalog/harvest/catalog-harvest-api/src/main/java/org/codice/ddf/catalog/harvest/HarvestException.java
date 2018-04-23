@@ -13,7 +13,7 @@
  */
 package org.codice.ddf.catalog.harvest;
 
-/** Exception for harvest related operations. */
+/** Exception for harvest-related operations. */
 public class HarvestException extends Exception {
 
   /** Instantiates a new exception. */

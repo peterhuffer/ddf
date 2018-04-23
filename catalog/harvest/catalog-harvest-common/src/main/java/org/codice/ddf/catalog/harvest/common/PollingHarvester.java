@@ -21,7 +21,7 @@ import org.codice.ddf.platform.util.StandardThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** A {@link Harvester} who is capable of polling a source for content. */
+/** A {@link Harvester} who is capable of polling a remote source for content. */
 public abstract class PollingHarvester implements Harvester {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PollingHarvester.class);

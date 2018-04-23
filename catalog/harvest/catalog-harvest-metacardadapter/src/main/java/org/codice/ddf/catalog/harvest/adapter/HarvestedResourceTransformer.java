@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
+import javax.annotation.Nullable;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -60,8 +61,9 @@ public class HarvestedResourceTransformer {
    * Creates a metacard.
    *
    * @param harvestedResource the {@link HarvestedResource} the metacard will be created from
-   * @return the metacard, or null if there was an error
+   * @return the metacard, or null if the resource could not be transformed
    */
+  @Nullable
   public Metacard transformHarvestedResource(HarvestedResource harvestedResource) {
     return transform(harvestedResource, null);
   }
@@ -71,8 +73,9 @@ public class HarvestedResourceTransformer {
    *
    * @param resource the {@link HarvestedResource} the metacard will be created from
    * @param metacardId id of the existing metacard to update
-   * @return the metacard, or null if there was an error
+   * @return the metacard, or null if the resource could not be transformed
    */
+  @Nullable
   public Metacard transformHarvestedResource(HarvestedResource resource, String metacardId) {
     return transform(resource, metacardId);
   }
@@ -167,8 +170,8 @@ public class HarvestedResourceTransformer {
   }
 
   /**
-   * Sets the attribute on a metacard. If attributeValue is empty or null, then nothing will be set
-   * on the metacard. Does not override existing attributes.
+   * Sets the {@link Attribute} on a {@link Metacard}. If attributeValue is empty or null, then
+   * nothing will be set on the {@link Metacard}. Does not override existing {@link Attribute}s.
    *
    * @param metacard metacard to add attribute to
    * @param attributeName attribute name to add

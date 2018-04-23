@@ -41,13 +41,13 @@ public class WebDavHarvester extends PollingHarvester {
 
   private final Sardine sardine = SardineFactory.begin();
 
-  private String persistentKey;
+  private final String persistentKey;
 
-  private DavAlterationObserver observer;
+  private final DavAlterationObserver observer;
 
-  private FileSystemPersistenceProvider persistenceProvider;
+  private final FileSystemPersistenceProvider persistenceProvider;
 
-  private HarvestedResourceListener webdavListener;
+  private final HarvestedResourceListener webdavListener;
 
   /**
    * Creates a WebDav {@link Harvester} which will harvest products from the provided address.

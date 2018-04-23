@@ -72,11 +72,10 @@ public class MetacardOnlyAdapter implements StorageAdapter {
     Metacard metacard = harvestedResourceTransformer.transformHarvestedResource(resource);
 
     if (metacard == null) {
-      LOGGER.debug(
-          "Unable to transform resource [{}] to a metacard. Resource will not be processed.",
-          resource.getName());
       throw new HarvestException(
-          String.format("Unable to transform resource [%s].", resource.getName()));
+          String.format(
+              "Unable to transform resource [%s]. Resource will not be processed.",
+              resource.getName()));
     }
 
     CreateRequest createRequest =
@@ -92,16 +91,12 @@ public class MetacardOnlyAdapter implements StorageAdapter {
             if (createdMetacards.size() == 1) {
               return createdMetacards.get(0).getId();
             } else {
-              LOGGER.debug(
-                  "Received multiple metacards for a single created resource. [{}].",
-                  createdMetacards);
               throw new HarvestException(
                   String.format(
-                      "Multiple metacards returned for single create for resource [%s]",
+                      "Multiple metacards returned for single created resource [%s]",
                       resource.getName()));
             }
           } catch (IngestException | SourceUnavailableException e) {
-            LOGGER.debug("Failed to ingest resource [{}].", resource.getName(), e);
             throw new HarvestException(
                 String.format("Failed to create resource [%s]", resource.getName()), e);
           }
@@ -113,12 +108,10 @@ public class MetacardOnlyAdapter implements StorageAdapter {
     Metacard metacard = harvestedResourceTransformer.transformHarvestedResource(resource, updateId);
 
     if (metacard == null) {
-      LOGGER.debug(
-          "Unable to transform resource [{}] with update id [{}]. Resource will not be processed.",
-          resource.getName(),
-          updateId);
       throw new HarvestException(
-          String.format("Unable to transform resource [%s]", resource.getName()));
+          String.format(
+              "Unable to transform resource [%s]. Resource will not be processed.",
+              resource.getName()));
     }
 
     UpdateRequest updateRequest = new UpdateRequestImpl(updateId, metacard);
@@ -139,17 +132,12 @@ public class MetacardOnlyAdapter implements StorageAdapter {
             if (updatedMetacardIds.size() == 1) {
               return updatedMetacardIds.get(0);
             } else {
-              LOGGER.debug(
-                  "Received {} metacards for a single updated resource. [{}]",
-                  updatedMetacardIds.size(),
-                  updatedMetacardIds);
               throw new HarvestException(
                   String.format(
                       "Multiple metacards returned for single update for resource [%s]",
                       resource.getName()));
             }
           } catch (IngestException | SourceUnavailableException e) {
-            LOGGER.debug("Failed to update resource [{}].", resource.getName(), e);
             throw new HarvestException(
                 String.format("Failed to update resource [%s]", resource.getName()), e);
           }
@@ -166,13 +154,11 @@ public class MetacardOnlyAdapter implements StorageAdapter {
             DeleteResponse response = catalogFramework.delete(deleteRequest);
 
             if (response.getDeletedMetacards().isEmpty()) {
-              LOGGER.debug("No metacards retrieved from catalog delete request for id [{}].", id);
               throw new HarvestException(
                   String.format(
                       "No metacards retrieved from catalog delete request for id [%s]", id));
             }
           } catch (IngestException | SourceUnavailableException e) {
-            LOGGER.debug("Failed to delete harvested resource with id [{}].", id, e);
             throw new HarvestException(
                 String.format("Failed to delete harvested resource with id [%s]", id), e);
           }

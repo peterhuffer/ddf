@@ -47,7 +47,6 @@ public class ContentDirectoryMonitor {
 
   public static final String MOVE = "move";
 
-  // TODO: 4/10/18 phuffer - Remove, gonna break tests
   public static final String IN_PLACE = "in_place";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ContentDirectoryMonitor.class);
@@ -219,7 +218,6 @@ public class ContentDirectoryMonitor {
    *
    * @param properties - properties map for the configuration
    */
-  // TODO: 4/11/18 phuffer - used in tests. needs to go away
   public void updateCallback(Map<String, Object> properties) {
     if (properties != null) {
       setMonitoredDirectoryPath((String) properties.get("monitoredDirectoryPath"));
@@ -331,20 +329,18 @@ public class ContentDirectoryMonitor {
         // Set the readLockTimeout to 2 * readLockIntervalMilliseconds
         // Set the readLockCheckInterval to check every readLockIntervalMilliseconds
 
-        stringBuilder.append("file:");
-        stringBuilder.append(monitoredDirectory);
-        stringBuilder.append("?recursive=true");
-        stringBuilder.append("&moveFailed=.errors");
-
-        /* ReadLock Configuration */
-        stringBuilder.append("&readLockMinLength=1");
-        stringBuilder.append("&readLock=changed");
-
-        stringBuilder.append("&readLockTimeout=");
-        stringBuilder.append(2 * readLockIntervalMilliseconds);
-
-        stringBuilder.append("&readLockCheckInterval=");
-        stringBuilder.append(readLockIntervalMilliseconds);
+        stringBuilder
+            .append("file:")
+            .append(monitoredDirectory)
+            .append("?recursive=true")
+            .append("&moveFailed=.errors")
+            /* ReadLock Configuration */
+            .append("&readLockMinLength=1")
+            .append("&readLock=changed")
+            .append("&readLockTimeout=")
+            .append(2 * readLockIntervalMilliseconds)
+            .append("&readLockCheckInterval=")
+            .append(readLockIntervalMilliseconds);
 
         /* File Exclusions */
         String exclusions = getBlackListAsRegex();

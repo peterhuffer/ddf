@@ -22,7 +22,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>DDF :: Catalog :: Harvest :: Listener :: Persistent</name>
+    <name>DDF :: Catalog :: Harvest :: Persistent Listener</name>
     <artifactId>catalog-harvest-persistentlistener</artifactId>
     <packaging>jar</packaging>
 
@@ -42,6 +42,7 @@
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
+            <version>${hazelcast.version}</version>
         </dependency>
     </dependencies>
 

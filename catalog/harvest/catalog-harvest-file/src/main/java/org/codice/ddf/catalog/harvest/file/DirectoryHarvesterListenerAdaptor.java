@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.Set;
+import javax.annotation.Nullable;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
 import org.codice.ddf.catalog.harvest.Listener;
@@ -56,6 +57,7 @@ public class DirectoryHarvesterListenerAdaptor extends FileAlterationListenerAda
     listeners.forEach(listener -> listener.onDelete(file.toURI().toASCIIString()));
   }
 
+  @Nullable
   private HarvestedResource createHarvestedResource(File file) {
     try {
       return new HarvestedFile(
@@ -63,7 +65,8 @@ public class DirectoryHarvesterListenerAdaptor extends FileAlterationListenerAda
     } catch (FileNotFoundException e) {
       LOGGER.debug(
           "Failed to get input stream from file [{}]. Create event will not be sent to listener",
-          file.toURI());
+          file.toURI(),
+          e);
       return null;
     }
   }

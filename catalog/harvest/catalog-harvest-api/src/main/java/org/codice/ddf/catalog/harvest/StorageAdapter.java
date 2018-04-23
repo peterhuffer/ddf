@@ -14,7 +14,7 @@
 package org.codice.ddf.catalog.harvest;
 
 /**
- * An {@code StorageAdapter} is responsible for persisting {@link HarvestedResource}s to a data
+ * A {@code StorageAdapter} is responsible for persisting {@link HarvestedResource}s to a data
  * store.
  *
  * <p><b> This code is experimental. While this class is functional and tested, it may change or be
@@ -35,16 +35,16 @@ public interface StorageAdapter {
    * Updates the {@link HarvestedResource} in this {@code StorageAdapter}'s data store.
    *
    * @param resource the {@link HarvestedResource} to update the existing data in the store
-   * @param id the id for the existing data to update
-   * @throws HarvestException if the resource couldn't be updated
+   * @param id the unique identifier for the stored data to update
+   * @throws HarvestException if the resource could not be updated
    */
   void update(HarvestedResource resource, String id) throws HarvestException;
 
   /**
    * Deletes data from this {@code StorageAdapter}'s data store.
    *
-   * @param id unique identifier for the data to delete
-   * @throws HarvestException if the data failed to be deleted
+   * @param id the unique identifier for the stored data to delete
+   * @throws HarvestException if the resource could not be deleted
    */
   void delete(String id) throws HarvestException;
 }

@@ -104,7 +104,7 @@ public class DavAlterationObserver implements Serializable {
       rootEntry.setChildren(children);
     } catch (IOException e) {
       // probably means root location was inaccessible
-      LOGGER.debug("Failed to initalize against remote {}", rootEntry.getLocation(), e);
+      LOGGER.debug("Failed to initialize against remote {}", rootEntry.getLocation(), e);
     }
   }
 

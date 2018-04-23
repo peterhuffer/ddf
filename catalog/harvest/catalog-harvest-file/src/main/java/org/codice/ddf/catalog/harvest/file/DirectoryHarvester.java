@@ -65,13 +65,13 @@ public class DirectoryHarvester extends PollingHarvester {
     this(dir, DEFAULT_POLL_INTERVAL, listeners);
   }
 
-  public DirectoryHarvester(String dir, long pollInterval, Set<Listener> inititialListeners) {
+  public DirectoryHarvester(String dir, long pollInterval, Set<Listener> initialListeners) {
     super(pollInterval);
     harvestFile = new File(dir);
     validateDirectory(dir);
     persistenceKey = DigestUtils.sha1Hex(dir);
 
-    inititialListeners.forEach(this::registerListener);
+    initialListeners.forEach(this::registerListener);
     fileSystemPersistenceProvider = new FileSystemPersistenceProvider("harvest/directory");
     fileAlterationObserver = getCachedObserverOrCreate(persistenceKey, dir);
     fileListener = new DirectoryHarvesterListenerAdaptor(listeners);

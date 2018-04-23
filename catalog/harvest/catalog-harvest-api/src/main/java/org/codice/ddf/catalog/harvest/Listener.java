@@ -14,11 +14,11 @@
 package org.codice.ddf.catalog.harvest;
 
 /**
- * Responds to events from a {@link Harvester}. <b>{@code Listener}s are idempotent, receiving the
+ * Responds to events from a {@link Harvester}. <b>{@code Listener}s are idempotent; receiving the
  * same create, update, or delete event multiple times has no effect.</b>
  *
  * <p>{@link Harvester}s may thread out calls to {@code Listener}s if needed, so {@code Listener}s
- * don't have to.
+ * don't have to thread out calls.
  *
  * <p><b> This code is experimental. While this class is functional and tested, it may change or be
  * removed in a future version of the library. </b>
@@ -26,7 +26,7 @@ package org.codice.ddf.catalog.harvest;
 public interface Listener {
 
   /**
-   * Called when a {@link Harvester} receives a newly created file on a remote source.
+   * Called when a {@link Harvester} receives a newly-created file on a remote source.
    *
    * @param resource the {@link HarvestedResource} created on the remote source
    */

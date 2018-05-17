@@ -24,6 +24,10 @@ import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A {@link Listener} that tracks which {@link HarvestedResource}s have already been processed by a
+ * {@link org.codice.ddf.catalog.harvest.Harvester}.
+ */
 public class PersistentListener implements Listener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PersistentListener.class);
@@ -32,6 +36,12 @@ public class PersistentListener implements Listener {
 
   private final FileSystemPersistenceProvider persistenceProvider;
 
+  /**
+   * Constructor.
+   *
+   * @param adaptor the {@link StorageAdaptor} to send CUD events to
+   * @param pid a unique id for persisting
+   */
   public PersistentListener(StorageAdaptor adaptor, String pid) {
     this.adaptor = adaptor;
     persistenceProvider =

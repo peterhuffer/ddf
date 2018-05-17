@@ -39,7 +39,7 @@ import org.codice.ddf.platform.util.TemporaryFileBackedOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO javadoc
+/** Class for transforming a {@link HarvestedResource} to a {@link Metacard}. */
 public class HarvestedResourceTransformer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HarvestedResourceTransformer.class);
@@ -103,14 +103,7 @@ public class HarvestedResourceTransformer {
             doTransform(byteSource, metacardId, inputTransformer, harvestedResource);
 
         if (metacardOptional.isPresent()) {
-          final Metacard metacard = metacardOptional.get();
-          writeMetacardAttribute(metacard, Core.TITLE, harvestedResource.getName());
-          writeMetacardAttribute(
-              metacard, Core.RESOURCE_SIZE, Long.toString(harvestedResource.getSize()));
-          writeMetacardAttribute(
-              metacard, Core.RESOURCE_URI, harvestedResource.getUri().toASCIIString());
-
-          return metacard;
+          return metacardOptional.get();
         }
       }
 

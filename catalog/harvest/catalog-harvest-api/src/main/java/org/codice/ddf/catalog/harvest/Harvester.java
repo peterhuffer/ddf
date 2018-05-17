@@ -28,11 +28,11 @@ public interface Harvester {
 
   /**
    * Registers a new {@link Listener} to receive events from the remote source being harvested from.
-   * Newly-registered {@link Listener}s will only receive new events from this {@code Harvester}.
+   * Newly-registered {@link Listener}s will only receive new events from this {@code Harvester}. If
+   * a {@link Listener} is already registered, the call to this method will be a no-op.
    *
    * @param listener the {@link Listener} to register
-   * @throws IllegalArgumentException if the {@link Listener} is already registered or cannot be
-   *     registered
+   * @throws IllegalArgumentException if the {@link Listener} cannot be registered
    */
   void registerListener(Listener listener);
 

@@ -27,6 +27,10 @@ import org.codice.ddf.catalog.harvest.common.PollingHarvester;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A {@link org.codice.ddf.catalog.harvest.Harvester} which polls a configured directory for
+ * changes.
+ */
 public class DirectoryHarvester extends PollingHarvester {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DirectoryHarvester.class);
@@ -60,12 +64,20 @@ public class DirectoryHarvester extends PollingHarvester {
    * directory.
    *
    * @param dir an absolute path to a directory
-   * @param listeners initial set of {@link Listener}s
+   * @param initialListeners initial set of {@link Listener}s
    */
-  public DirectoryHarvester(String dir, Set<Listener> listeners) {
-    this(dir, DEFAULT_POLL_INTERVAL, listeners);
+  public DirectoryHarvester(String dir, Set<Listener> initialListeners) {
+    this(dir, DEFAULT_POLL_INTERVAL, initialListeners);
   }
 
+  /**
+   * Creates and starts a {@link org.codice.ddf.catalog.harvest.Harvester} that harvests a
+   * directory.
+   *
+   * @param dir an absolute path to a directory
+   * @param pollInterval time in seconds to poll the directory for changes
+   * @param initialListeners initial set of {@link Listener}s
+   */
   public DirectoryHarvester(String dir, long pollInterval, Set<Listener> initialListeners) {
     super(pollInterval);
     harvestFile = new File(dir);
@@ -94,6 +106,8 @@ public class DirectoryHarvester extends PollingHarvester {
   public void poll() {
     fileAlterationObserver.addListener(fileListener);
     fileAlterationObserver.checkAndNotify();
+    // Since the observer is serializable, and the fileListener is not, it needs to be
+    // removed before persisting the observer
     fileAlterationObserver.removeListener(fileListener);
     fileSystemPersistenceProvider.store(persistenceKey, fileAlterationObserver);
   }

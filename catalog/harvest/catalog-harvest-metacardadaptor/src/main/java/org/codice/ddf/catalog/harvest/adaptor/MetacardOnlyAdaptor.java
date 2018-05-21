@@ -19,6 +19,7 @@ import ddf.catalog.operation.CreateRequest;
 import ddf.catalog.operation.CreateResponse;
 import ddf.catalog.operation.DeleteRequest;
 import ddf.catalog.operation.DeleteResponse;
+import ddf.catalog.operation.Update;
 import ddf.catalog.operation.UpdateRequest;
 import ddf.catalog.operation.UpdateResponse;
 import ddf.catalog.operation.impl.CreateRequestImpl;
@@ -36,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.Validate;
 import org.codice.ddf.catalog.harvest.HarvestException;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
@@ -83,6 +83,10 @@ public class MetacardOnlyAdaptor implements StorageAdaptor {
             List<Metacard> createdMetacards = response.getCreatedMetacards();
             if (createdMetacards.size() == 1) {
               return createdMetacards.get(0).getId();
+            } else if (createdMetacards.isEmpty()) {
+              throw new HarvestException(
+                  String.format(
+                      "No metacards were created from resource [%s].", resource.getName()));
             } else {
               throw new HarvestException(
                   String.format(
@@ -108,15 +112,13 @@ public class MetacardOnlyAdaptor implements StorageAdaptor {
             UpdateResponse response;
             response = catalogFramework.update(updateRequest);
 
-            List<String> updatedMetacardIds =
-                response
-                    .getUpdatedMetacards()
-                    .stream()
-                    .map(update -> update.getNewMetacard().getId())
-                    .collect(Collectors.toList());
-
-            if (updatedMetacardIds.size() == 1) {
-              return updatedMetacardIds.get(0);
+            List<Update> updatedMetacard = response.getUpdatedMetacards();
+            if (updatedMetacard.size() == 1) {
+              return updatedMetacard.get(0).getNewMetacard().getId();
+            } else if (updatedMetacard.isEmpty()) {
+              throw new HarvestException(
+                  String.format(
+                      "No metacard updates received for resource [%s]", resource.getName()));
             } else {
               throw new HarvestException(
                   String.format(
@@ -139,10 +141,15 @@ public class MetacardOnlyAdaptor implements StorageAdaptor {
           try {
             DeleteResponse response = catalogFramework.delete(deleteRequest);
 
-            if (response.getDeletedMetacards().isEmpty()) {
+            List<Metacard> deletedMetacard = response.getDeletedMetacards();
+
+            if (deletedMetacard.isEmpty()) {
               throw new HarvestException(
                   String.format(
                       "No metacards retrieved from catalog delete request for id [%s]", id));
+            } else if (deletedMetacard.size() > 1) {
+              throw new HarvestException(
+                  String.format("Multiple metacards deleted for metacard id [%s]", id));
             }
           } catch (IngestException | SourceUnavailableException e) {
             throw new HarvestException(

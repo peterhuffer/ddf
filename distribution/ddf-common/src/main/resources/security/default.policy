@@ -169,7 +169,7 @@ grant codeBase "file:/org.apache.karaf.shell.core/org.apache.shiro.core" {
     permission java.io.FilePermission "<<ALL FILES>>", "read,write";
 }
 
-grant codeBase "file:/catalog-harvest-manager" {
+grant codeBase "file:/catalog-harvest-sourceharvester" {
    permission java.lang.RuntimePermission "createClassLoader";
 }
 

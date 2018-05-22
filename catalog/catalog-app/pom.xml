@@ -640,12 +640,12 @@
         </dependency>
         <dependency>
             <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-metacardadapter</artifactId>
+            <artifactId>catalog-harvest-metacardadaptor</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-manager</artifactId>
+            <artifactId>catalog-harvest-sourceharvester</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

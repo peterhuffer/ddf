@@ -19,7 +19,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
 
-// TODO javadoc
 public class HarvestedFile extends ResourceImpl implements HarvestedResource {
 
   private final URI uri;

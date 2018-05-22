@@ -90,6 +90,7 @@ public class WebDavHarvester extends PollingHarvester {
   public void poll() {
     observer.addListener(webdavListener);
     observer.checkAndNotify(sardine);
+    // Remove listener before persisting to file system since it is not serializable
     observer.removeListener(webdavListener);
     persistenceProvider.store(persistentKey, observer);
   }

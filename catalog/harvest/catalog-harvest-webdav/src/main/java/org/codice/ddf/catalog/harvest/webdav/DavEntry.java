@@ -15,6 +15,7 @@ package org.codice.ddf.catalog.harvest.webdav;
 
 import com.github.sardine.DavResource;
 import com.github.sardine.Sardine;
+import ddf.security.common.audit.SecurityLogger;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -201,6 +202,7 @@ public class DavEntry implements Serializable {
           new File(dav.toFile(), URLDecoder.decode(FilenameUtils.getName(getLocation()), "UTF-8"));
       try (OutputStream os = new FileOutputStream(dest)) {
         IOUtils.copy(sardine.get(getLocation()), os);
+        SecurityLogger.audit("Created file {}", dest.toPath());
         setFile(dest);
       } catch (IOException e) {
         throw new UncheckedIOException(e);

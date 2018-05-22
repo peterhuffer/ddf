@@ -13,6 +13,7 @@
  */
 package org.codice.ddf.catalog.harvest.file;
 
+import ddf.security.common.audit.SecurityLogger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -60,9 +61,9 @@ public class DirectoryHarvesterListenerAdaptor extends FileAlterationListenerAda
   @Nullable
   private HarvestedResource createHarvestedResource(File file) {
     try {
+      SecurityLogger.audit("Opening file {}", file.toPath());
       return new HarvestedFile(
           new FileInputStream(file), file.getName(), file.toURI().toASCIIString());
-      // TODO audit
     } catch (FileNotFoundException e) {
       LOGGER.debug(
           "Failed to get input stream from file [{}]. Create event will not be sent to listener",

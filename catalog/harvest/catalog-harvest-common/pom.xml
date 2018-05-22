@@ -37,6 +37,11 @@
             <artifactId>catalog-core-api-impl</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ddf.security.core</groupId>
+            <artifactId>security-core-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Third Party -->
         <dependency>

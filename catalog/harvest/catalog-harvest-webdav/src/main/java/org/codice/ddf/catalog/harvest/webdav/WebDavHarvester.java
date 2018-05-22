@@ -16,6 +16,7 @@ package org.codice.ddf.catalog.harvest.webdav;
 import com.github.sardine.Sardine;
 import com.github.sardine.SardineFactory;
 import com.google.common.hash.Hashing;
+import ddf.security.common.audit.SecurityLogger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -145,7 +146,6 @@ public class WebDavHarvester extends PollingHarvester {
       File file;
       try {
         file = entry.getFile(SardineFactory.begin());
-        // TODO audit
       } catch (IOException e) {
         LOGGER.debug(
             "Error retrieving dav file [{}]. File won't be processed.", entry.getLocation(), e);
@@ -153,6 +153,7 @@ public class WebDavHarvester extends PollingHarvester {
       }
 
       try {
+        SecurityLogger.audit("Opening file {}", file.toPath());
         return new HarvestedFile(new FileInputStream(file), file.getName(), entry.getLocation());
       } catch (FileNotFoundException e) {
         LOGGER.debug(

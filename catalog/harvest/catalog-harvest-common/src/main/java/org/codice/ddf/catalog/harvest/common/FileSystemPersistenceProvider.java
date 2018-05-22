@@ -15,6 +15,7 @@ package org.codice.ddf.catalog.harvest.common;
 
 import com.hazelcast.core.MapLoader;
 import com.hazelcast.core.MapStore;
+import ddf.security.common.audit.SecurityLogger;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -28,6 +29,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,12 +72,13 @@ public class FileSystemPersistenceProvider
     this.mapName = mapName;
     this.persistencePath = persistencePath;
     File dir = new File(getPersistencePath());
+
     if (!dir.exists() && !dir.mkdir()) {
-      // TODO audit
-      // TODO catch AccessControlException
       throw new IllegalArgumentException(
           String.format("Unable to create persistence directory for [%s]", dir.getAbsoluteFile()));
     }
+
+    SecurityLogger.audit("Created directory {}", dir.toPath());
   }
 
   /**
@@ -103,16 +106,18 @@ public class FileSystemPersistenceProvider
 
     if (new File(getPersistencePath()).canWrite()) {
       boolean created = dir.mkdirs();
-      // TODO audit
-      // TODO catch AccessControlException
-      if (created || dir.exists()) {
+
+      if (created) {
+        SecurityLogger.audit("Created directory {}", dir.toPath());
+      }
+
+      if (dir.exists()) {
         LOGGER.trace("Entering: store - key: {}", key);
         try (OutputStream file = new FileOutputStream(getPersistedFilePathForKey(key));
-            // TODO audit
-            // TODO catch AccessControlException
             OutputStream buffer = new BufferedOutputStream(file);
             ObjectOutputStream output = new ObjectOutputStream(buffer)) {
           output.writeObject(value);
+          SecurityLogger.audit("Wrote {} to file {}", value, file);
         } catch (IOException e) {
           LOGGER.debug("IOException storing value in cache with key = {}", key, e);
           LOGGER.warn(
@@ -136,11 +141,11 @@ public class FileSystemPersistenceProvider
   @Override
   public void delete(String key) {
     File file = new File(getPersistedFilePathForKey(key));
+
     if (file.exists()) {
       try {
         Files.delete(file.toPath());
-        // TODO audit
-        // TODO catch AccessControlException
+        SecurityLogger.audit("Deleted file {}", file.toPath());
       } catch (IOException e) {
         LOGGER.debug("File was unable to be deleted: {}", file.getAbsolutePath(), e);
         LOGGER.warn(
@@ -210,8 +215,9 @@ public class FileSystemPersistenceProvider
   public Set<String> loadAllKeys() {
     Set<String> keys = new HashSet<>();
 
-    File[] files = new File(getMapStorePath()).listFiles(getFilenameFilter());
-    // TODO catch AccessControlException
+    String mapStorePath = getMapStorePath();
+    File[] files = new File(mapStorePath).listFiles(getFilenameFilter());
+
     if (files == null) {
       return keys;
     }
@@ -231,9 +237,9 @@ public class FileSystemPersistenceProvider
     if (files != null) {
       for (File file : files) {
         try {
-          Files.delete(file.toPath());
-          // TODO audit
-          // TODO catch AccessControlException
+          Path filePath = file.toPath();
+          Files.delete(filePath);
+          SecurityLogger.audit("Deleted file {}", filePath);
         } catch (IOException e) {
           LOGGER.debug("File was unable to be deleted: {}", file.getAbsolutePath(), e);
           LOGGER.warn(

@@ -17,7 +17,9 @@ import com.google.common.hash.Hashing;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
+import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.codice.ddf.catalog.harvest.Listener;
 import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
@@ -35,13 +37,15 @@ public class DirectoryHarvester extends PollingHarvester {
 
   private static final long DEFAULT_POLL_INTERVAL = 5;
 
+  private final Set<Listener> listeners = new HashSet<>();
+
   private final File harvestFile;
 
   private final FileSystemPersistenceProvider fileSystemPersistenceProvider;
 
   private final FileAlterationObserver fileAlterationObserver;
 
-  private final DirectoryHarvesterListenerAdaptor fileListener;
+  private final FileAlterationListenerAdaptor fileListener;
 
   private final String persistenceKey;
 
@@ -83,7 +87,7 @@ public class DirectoryHarvester extends PollingHarvester {
     initialListeners.forEach(this::registerListener);
     fileSystemPersistenceProvider = new FileSystemPersistenceProvider("harvest/directory");
     fileAlterationObserver = getCachedObserverOrCreate(persistenceKey, dir);
-    fileListener = new DirectoryHarvesterListenerAdaptor();
+    fileListener = new DirectoryHarvesterListenerAdaptor(listeners);
 
     super.init();
   }
@@ -109,12 +113,16 @@ public class DirectoryHarvester extends PollingHarvester {
 
   @Override
   public void registerListener(Listener listener) {
-    fileListener.registerListener(listener);
+    if (!listeners.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Only 1 registered listener is currently supported for this harvester.");
+    }
+    listeners.add(listener);
   }
 
   @Override
   public void unregisterListener(Listener listener) {
-    fileListener.unregisterListener(listener);
+    listeners.remove(listener);
   }
 
   private void validateDirectory(String dir) {

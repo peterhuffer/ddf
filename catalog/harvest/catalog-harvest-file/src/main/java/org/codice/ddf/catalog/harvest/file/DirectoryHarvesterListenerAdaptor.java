@@ -17,9 +17,9 @@ import ddf.security.common.audit.SecurityLogger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.Set;
-import javax.annotation.Nullable;
+import java.util.Optional;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
+import org.apache.commons.lang3.event.EventListenerSupport;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
 import org.codice.ddf.catalog.harvest.Listener;
 import org.codice.ddf.catalog.harvest.common.HarvestedFile;
@@ -31,45 +31,46 @@ public class DirectoryHarvesterListenerAdaptor extends FileAlterationListenerAda
   private static final Logger LOGGER =
       LoggerFactory.getLogger(DirectoryHarvesterListenerAdaptor.class);
 
-  private final Set<Listener> listeners;
-
-  DirectoryHarvesterListenerAdaptor(Set<Listener> listeners) {
-    this.listeners = listeners;
-  }
+  private final EventListenerSupport<Listener> listeners =
+      EventListenerSupport.create(Listener.class);
 
   @Override
   public void onFileCreate(final File file) {
-    HarvestedResource harvestedResource = createHarvestedResource(file);
-    if (harvestedResource != null) {
-      listeners.forEach(listener -> listener.onCreate(harvestedResource));
-    }
+    createHarvestedResource(file)
+        .ifPresent(harvestedResource -> listeners.fire().onCreate(harvestedResource));
   }
 
   @Override
   public void onFileChange(final File file) {
-    HarvestedResource harvestedResource = createHarvestedResource(file);
-    if (harvestedResource != null) {
-      listeners.forEach(listener -> listener.onUpdate(harvestedResource));
-    }
+    createHarvestedResource(file)
+        .ifPresent(harvestedResource -> listeners.fire().onUpdate(harvestedResource));
   }
 
   @Override
   public void onFileDelete(final File file) {
-    listeners.forEach(listener -> listener.onDelete(file.toURI().toASCIIString()));
+    listeners.fire().onDelete(file.toURI().toASCIIString());
   }
 
-  @Nullable
-  private HarvestedResource createHarvestedResource(File file) {
+  void registerListener(Listener listener) {
+    listeners.addListener(listener, false);
+  }
+
+  void unregisterListener(Listener listener) {
+    listeners.removeListener(listener);
+  }
+
+  private Optional<HarvestedResource> createHarvestedResource(File file) {
     try {
       SecurityLogger.audit("Opening file {}", file.toPath());
-      return new HarvestedFile(
-          new FileInputStream(file), file.getName(), file.toURI().toASCIIString());
+      return Optional.of(
+          new HarvestedFile(
+              new FileInputStream(file), file.getName(), file.toURI().toASCIIString()));
     } catch (FileNotFoundException e) {
       LOGGER.debug(
           "Failed to get input stream from file [{}]. Create event will not be sent to listener",
           file.toURI(),
           e);
-      return null;
+      return Optional.empty();
     }
   }
 }

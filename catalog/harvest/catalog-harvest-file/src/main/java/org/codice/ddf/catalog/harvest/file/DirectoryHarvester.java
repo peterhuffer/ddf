@@ -102,8 +102,7 @@ public class DirectoryHarvester extends PollingHarvester {
   public void poll() {
     fileAlterationObserver.addListener(fileListener);
     fileAlterationObserver.checkAndNotify();
-    // Since the observer is serializable, and the fileListener is not, it needs to be
-    // removed before persisting the observer
+    // Remove listener before persisting to file system since it is not serializable
     fileAlterationObserver.removeListener(fileListener);
     fileSystemPersistenceProvider.store(persistenceKey, fileAlterationObserver);
   }

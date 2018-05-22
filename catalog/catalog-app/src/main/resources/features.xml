@@ -497,6 +497,7 @@
 
     <feature name="catalog-harvest-framework" version="${project.version}"
              description="Harvests content from a remote location and ingests it into the Catalog.">
+        <bundle>mvn:org.apache.commons/commons-lang3/3.7</bundle>
         <bundle>mvn:ddf.catalog.harvest/catalog-harvest-api/${project.version}</bundle>
         <bundle>mvn:ddf.catalog.harvest/catalog-harvest-metacardadaptor/${project.version}</bundle>
         <bundle>mvn:ddf.catalog.harvest/catalog-harvest-sourceharvester/${project.version}</bundle>

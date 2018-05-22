@@ -22,9 +22,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
+import java.util.Optional;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.event.EventListenerSupport;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
 import org.codice.ddf.catalog.harvest.Harvester;
 import org.codice.ddf.catalog.harvest.Listener;
@@ -39,7 +41,8 @@ public class WebDavHarvester extends PollingHarvester {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(WebDavHarvester.class);
 
-  private final Set<Listener> listeners = new HashSet<>();
+  private final EventListenerSupport<Listener> listeners =
+      EventListenerSupport.create(Listener.class);
 
   private final Sardine sardine = SardineFactory.begin();
 
@@ -93,16 +96,12 @@ public class WebDavHarvester extends PollingHarvester {
 
   @Override
   public void registerListener(Listener listener) {
-    if (!listeners.isEmpty()) {
-      throw new IllegalArgumentException(
-          "Only 1 registered listener is currently supported for this harvester.");
-    }
-    listeners.add(listener);
+    listeners.addListener(listener, false);
   }
 
   @Override
   public void unregisterListener(Listener listener) {
-    listeners.remove(listener);
+    listeners.removeListener(listener);
   }
 
   private class HarvestedResourceListener implements EntryAlterationListener {
@@ -113,10 +112,8 @@ public class WebDavHarvester extends PollingHarvester {
 
     @Override
     public void onFileCreate(DavEntry entry) {
-      HarvestedResource harvestedResource = createHarvestedResource(entry);
-      if (harvestedResource != null) {
-        listeners.forEach(listener -> listener.onCreate(harvestedResource));
-      }
+      createHarvestedResource(entry)
+          .ifPresent(harvestedResource -> listeners.fire().onCreate(harvestedResource));
     }
 
     @Override
@@ -126,10 +123,8 @@ public class WebDavHarvester extends PollingHarvester {
 
     @Override
     public void onFileChange(DavEntry entry) {
-      HarvestedResource harvestedResource = createHarvestedResource(entry);
-      if (harvestedResource != null) {
-        listeners.forEach(listener -> listener.onUpdate(harvestedResource));
-      }
+      createHarvestedResource(entry)
+          .ifPresent(harvestedResource -> listeners.fire().onUpdate(harvestedResource));
     }
 
     @Override
@@ -139,27 +134,28 @@ public class WebDavHarvester extends PollingHarvester {
 
     @Override
     public void onFileDelete(DavEntry entry) {
-      listeners.forEach(listener -> listener.onDelete(entry.getLocation()));
+      listeners.fire().onDelete(entry.getLocation());
     }
 
-    private HarvestedResource createHarvestedResource(DavEntry entry) {
+    private Optional<HarvestedResource> createHarvestedResource(DavEntry entry) {
       File file;
       try {
         file = entry.getFile(SardineFactory.begin());
       } catch (IOException e) {
         LOGGER.debug(
             "Error retrieving dav file [{}]. File won't be processed.", entry.getLocation(), e);
-        return null;
+        return Optional.empty();
       }
 
       try {
         SecurityLogger.audit("Opening file {}", file.toPath());
-        return new HarvestedFile(new FileInputStream(file), file.getName(), entry.getLocation());
+        return Optional.of(
+            new HarvestedFile(new FileInputStream(file), file.getName(), entry.getLocation()));
       } catch (FileNotFoundException e) {
         LOGGER.debug(
             "Failed to get input stream from file [{}]. Event will not be sent to listener",
             file.toURI());
-        return null;
+        return Optional.empty();
       }
     }
   }

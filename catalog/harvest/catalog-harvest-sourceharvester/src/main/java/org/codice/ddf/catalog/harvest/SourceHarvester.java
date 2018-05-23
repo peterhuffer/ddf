@@ -109,10 +109,7 @@ public class SourceHarvester {
 
   private void createInPlaceHarvester(String location) {
     if (monitoredLocation.startsWith(HTTP)) {
-      webDavHarvester =
-          new WebDavHarvester(
-              location,
-              Collections.singleton(new PersistentListener(metacardOnlyAdaptor, location)));
+      webDavHarvester = new WebDavHarvester(metacardOnlyAdaptor);
     } else {
       inPlaceDirectoryHarvester =
           new DirectoryHarvester(

@@ -16,22 +16,31 @@ package org.codice.ddf.catalog.harvest.webdav;
 import com.github.sardine.Sardine;
 import com.github.sardine.SardineFactory;
 import com.google.common.hash.Hashing;
+import ddf.catalog.Constants;
 import ddf.security.common.audit.SecurityLogger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang.Validate;
+import org.apache.commons.collections.MapUtils;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
 import org.codice.ddf.catalog.harvest.Harvester;
 import org.codice.ddf.catalog.harvest.Listener;
+import org.codice.ddf.catalog.harvest.StorageAdaptor;
 import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
 import org.codice.ddf.catalog.harvest.common.HarvestedFile;
 import org.codice.ddf.catalog.harvest.common.PollingHarvester;
+import org.codice.ddf.catalog.harvest.listeners.PersistentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,34 +51,27 @@ public class WebDavHarvester extends PollingHarvester {
 
   private final Set<Listener> listeners = Collections.synchronizedSet(new HashSet<>());
 
+  private final HarvestedResourceListener webdavListener = new HarvestedResourceListener();
+
   private final Sardine sardine = SardineFactory.begin();
 
-  private final String persistentKey;
+  private final StorageAdaptor storageAdaptor;
 
-  private final DavAlterationObserver observer;
+  private String persistentKey;
 
-  private final FileSystemPersistenceProvider persistenceProvider;
+  private DavAlterationObserver observer;
 
-  private final HarvestedResourceListener webdavListener;
+  private FileSystemPersistenceProvider persistenceProvider;
 
-  /**
-   * Creates a WebDav {@link Harvester} which will harvest products from the provided address.
-   *
-   * @param address http URL WebDav address
-   * @param initialListeners {@link Listener}s to register to this harvester
-   */
-  public WebDavHarvester(String address, Set<Listener> initialListeners) {
+  private String webdavAddress;
+
+  private Map<String, Serializable> attributeOverrides = new HashMap<>();
+
+  /** Creates a WebDav {@link Harvester} which will harvest products from the provided address. */
+  public WebDavHarvester(StorageAdaptor storageAdaptor) {
     super(5L);
-    Validate.notEmpty(address, "Argument address may not be empty");
-
+    this.storageAdaptor = storageAdaptor;
     persistenceProvider = new FileSystemPersistenceProvider("harvest/webdav");
-    webdavListener = new HarvestedResourceListener();
-
-    initialListeners.forEach(this::registerListener);
-    persistentKey = Hashing.sha256().hashString(address, StandardCharsets.UTF_8).toString();
-    observer = getCachedObserverOrCreate(persistentKey, address);
-
-    super.init();
   }
 
   private DavAlterationObserver getCachedObserverOrCreate(String key, String rootEntryLocation) {
@@ -102,6 +104,13 @@ public class WebDavHarvester extends PollingHarvester {
     listeners.add(listener);
   }
 
+  public void init() {
+    persistentKey = Hashing.sha256().hashString(webdavAddress, StandardCharsets.UTF_8).toString();
+    observer = getCachedObserverOrCreate(persistentKey, webdavAddress);
+    this.registerListener(new PersistentListener(storageAdaptor, webdavAddress));
+    super.init();
+  }
+
   @Override
   public void unregisterListener(Listener listener) {
     listeners.remove(listener);
@@ -115,10 +124,11 @@ public class WebDavHarvester extends PollingHarvester {
 
     @Override
     public void onFileCreate(DavEntry entry) {
-      HarvestedResource harvestedResource = createHarvestedResource(entry);
-      if (harvestedResource != null) {
-        listeners.forEach(listener -> listener.onCreate(harvestedResource));
-      }
+      createHarvestedResource(entry)
+          .ifPresent(
+              harvestedResource ->
+                  listeners.forEach(listener -> listener.onCreate(harvestedResource)));
+      entry.deleteCacheIfExists();
     }
 
     @Override
@@ -128,10 +138,11 @@ public class WebDavHarvester extends PollingHarvester {
 
     @Override
     public void onFileChange(DavEntry entry) {
-      HarvestedResource harvestedResource = createHarvestedResource(entry);
-      if (harvestedResource != null) {
-        listeners.forEach(listener -> listener.onUpdate(harvestedResource));
-      }
+      createHarvestedResource(entry)
+          .ifPresent(
+              harvestedResource ->
+                  listeners.forEach(listener -> listener.onUpdate(harvestedResource)));
+      entry.deleteCacheIfExists();
     }
 
     @Override
@@ -144,25 +155,100 @@ public class WebDavHarvester extends PollingHarvester {
       listeners.forEach(listener -> listener.onDelete(entry.getLocation()));
     }
 
-    private HarvestedResource createHarvestedResource(DavEntry entry) {
+    private Optional<HarvestedResource> createHarvestedResource(DavEntry entry) {
       File file;
       try {
         file = entry.getFile(SardineFactory.begin());
       } catch (IOException e) {
         LOGGER.debug(
             "Error retrieving dav file [{}]. File won't be processed.", entry.getLocation(), e);
-        return null;
+        return Optional.empty();
       }
 
       try {
         SecurityLogger.audit("Opening file {}", file.toPath());
-        return new HarvestedFile(new FileInputStream(file), file.getName(), entry.getLocation());
+        return Optional.of(
+            new HarvestedFile(new FileInputStream(file), file.getName(), entry.getLocation()));
       } catch (FileNotFoundException e) {
         LOGGER.debug(
             "Failed to get input stream from file [{}]. Event will not be sent to listener",
             file.toURI());
-        return null;
+        return Optional.empty();
       }
     }
+  }
+
+  /**
+   * Invoked when updates are made to the configuration of existing WebDav monitors. This method is
+   * invoked by the container as specified by the update-strategy and update-method attributes in
+   * Blueprint XML file.
+   *
+   * @param properties - properties map for the configuration
+   */
+  public void updateCallback(Map<String, Object> properties) {
+    if (MapUtils.isNotEmpty(properties)) {
+      setWebdavAddress(getPropertyAs(properties, "webdavAddress", String.class));
+
+      Object o = properties.get(Constants.ATTRIBUTE_OVERRIDES_KEY);
+      if (o instanceof String[]) {
+        String[] incomingAttrOverrides = (String[]) o;
+        setAttributeOverrides(Arrays.asList(incomingAttrOverrides));
+      }
+
+      destroy(0);
+      init();
+    }
+  }
+
+  @SuppressWarnings(
+      "squid:S1172" /* The code parameter is required in blueprint-cm-1.0.7. See https://issues.apache.org/jira/browse/ARIES-1436. */)
+  public void destroy(int code) {
+    super.destroy();
+  }
+
+  private <T> T getPropertyAs(Map<String, Object> properties, String key, Class<T> clazz) {
+    Object property = properties.get(key);
+    if (clazz.isInstance(property)) {
+      return clazz.cast(property);
+    }
+
+    throw new IllegalArgumentException(
+        String.format(
+            "Received invalid configuration value of [%s] for property [%s]. Expected type of [%s]",
+            property, key, clazz.getName()));
+  }
+
+  public void setAttributeOverrides(List<String> incomingAttrOverrides) {
+    attributeOverrides.clear();
+
+    for (String keyValuePair : incomingAttrOverrides) {
+      String[] parts = keyValuePair.split("=");
+
+      if (parts.length != 2) {
+        throw new IllegalArgumentException(
+            String.format("Invalid attribute override key value pair of [%s].", keyValuePair));
+      }
+
+      attributeOverrides.put(parts[0], parts[1]);
+    }
+  }
+
+  public void setWebdavAddress(String webdavAddress) {
+    this.webdavAddress = stripEndingSlash(webdavAddress);
+  }
+
+  /**
+   * Strips the trailing slash from the harvest location, if it exists. This will treat, for
+   * example, "http://localhost:8080/" and "http://localhost:8080" the same from a persistence
+   * tracking standpoint.
+   *
+   * @param location harvest location
+   * @return new string with strip slashed
+   */
+  private String stripEndingSlash(String location) {
+    if (location.endsWith("/")) {
+      return location.substring(0, location.length() - 1);
+    }
+    return location;
   }
 }

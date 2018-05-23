@@ -645,7 +645,7 @@
         </dependency>
         <dependency>
             <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-sourceharvester</artifactId>
+            <artifactId>catalog-harvest-webdav</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

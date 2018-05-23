@@ -24,7 +24,7 @@
 
     <name>DDF :: Catalog :: Harvest :: WebDav</name>
     <artifactId>catalog-harvest-webdav</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
@@ -54,10 +54,45 @@
             <artifactId>sardine</artifactId>
             <version>${sardine.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>${httpcore.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Export-Package/>
+                        <Import-Package>
+                            !org.apache.tools.ant,
+                            !org.apache.tools.ant.types,
+                            *
+                        </Import-Package>
+                        <Embed-Dependency>
+                            catalog-harvest-persistentlistener,
+                            catalog-harvest-common,
+                            sardine,
+                            hazelcast,
+                            <!--TODO still need httpcore and httpclient? -->
+                            httpcore,
+                            httpclient,
+                            platform-util
+                        </Embed-Dependency>
+                    </instructions>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>

@@ -37,7 +37,7 @@ public class DirectoryHarvester extends PollingHarvester {
 
   private static final long DEFAULT_POLL_INTERVAL = 5;
 
-  private final Set<Listener> listeners = new HashSet<>();
+  private final Set<Listener> listeners = Collections.synchronizedSet(new HashSet<>());
 
   private final File harvestFile;
 

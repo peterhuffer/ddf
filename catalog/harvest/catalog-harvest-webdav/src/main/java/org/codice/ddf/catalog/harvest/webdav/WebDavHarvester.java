@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.lang.Validate;
@@ -39,7 +40,7 @@ public class WebDavHarvester extends PollingHarvester {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(WebDavHarvester.class);
 
-  private final Set<Listener> listeners = new HashSet<>();
+  private final Set<Listener> listeners = Collections.synchronizedSet(new HashSet<>());
 
   private final Sardine sardine = SardineFactory.begin();
 

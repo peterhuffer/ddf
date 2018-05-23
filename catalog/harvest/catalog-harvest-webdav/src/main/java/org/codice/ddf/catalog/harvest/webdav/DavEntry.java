@@ -310,6 +310,11 @@ public class DavEntry implements Serializable {
     }
   }
 
+  /** Deletes the cached file of this {@code DavEntry}, if there is one. */
+  public void deleteCacheIfExists() {
+    FileUtils.deleteQuietly(file.getParentFile());
+  }
+
   public String getETag() {
     return eTag;
   }

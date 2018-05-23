@@ -90,7 +90,7 @@ public class HarvestedResourceTransformer {
       final ByteSource byteSource = tfbos.asByteSource();
 
       final MimeType mimeType =
-          Optional.of(harvestedResource.getMimeType())
+          Optional.ofNullable(harvestedResource.getMimeType())
               .orElse(
                   guessMimeTypeFor(
                       byteSource.openStream(),

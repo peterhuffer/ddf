@@ -152,12 +152,8 @@ public class HarvestedResourceTransformer {
 
   @Nullable
   private MimeType guessMimeTypeFor(InputStream is, String fileExt) {
-    try (TemporaryFileBackedOutputStream tfbos = new TemporaryFileBackedOutputStream()) {
-      IOUtils.copy(is, tfbos);
-
-      return new MimeType(mimeTypeMapper.guessMimeType(tfbos.asByteSource().openStream(), fileExt));
-    } catch (IOException e) {
-      LOGGER.debug("Failed to get input stream for harvested resource", e);
+    try {
+      return new MimeType(mimeTypeMapper.guessMimeType(is, fileExt));
     } catch (MimeTypeResolutionException | MimeTypeParseException me) {
       LOGGER.debug(
           "Failed to get mime type for input stream [{}] with file extension [{}].",

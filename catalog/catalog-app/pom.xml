@@ -648,5 +648,10 @@
             <artifactId>catalog-harvest-webdav</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ddf.catalog.harvest</groupId>
+            <artifactId>catalog-harvest-file</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

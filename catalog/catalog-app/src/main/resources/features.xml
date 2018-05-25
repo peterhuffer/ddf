@@ -502,6 +502,7 @@
 
         <bundle>mvn:ddf.catalog.harvest/catalog-harvest-webdav/${project.version}</bundle>
         <bundle>mvn:ddf.catalog.harvest/catalog-harvest-file/${project.version}</bundle>
+        <bundle>mvn:ddf.catalog.harvest/catalog-harvest-directorymonitor/${project.version}</bundle>
     </feature>
 
     <feature name="catalog-app" version="${project.version}"

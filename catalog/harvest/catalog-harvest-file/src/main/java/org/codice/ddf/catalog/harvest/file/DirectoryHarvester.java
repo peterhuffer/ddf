@@ -205,8 +205,7 @@ public class DirectoryHarvester extends PollingHarvester {
 
   /**
    * Strips the trailing slash from the harvest location, if it exists. This will treat, for
-   * example, "http://localhost:8080/" and "http://localhost:8080" the same from a persistence
-   * tracking standpoint.
+   * example, "/foo/bar" and "/foo/bar/" the same from a persistence tracking standpoint.
    *
    * @param location harvest location
    * @return new string with strip slashed

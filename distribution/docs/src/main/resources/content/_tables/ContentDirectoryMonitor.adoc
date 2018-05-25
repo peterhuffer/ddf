@@ -1,5 +1,5 @@
 :title: Content Directory Monitor
-:id: org.codice.ddf.catalog.harvest.ContentDirectoryMonitor
+:id: org.codice.ddf.catalog.harvest.directory.ContentDirectoryMonitor
 :type: table
 :status: published
 :application: ${ddf-catalog}

@@ -22,39 +22,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>DDF :: Catalog :: Harvest :: Source Harvester</name>
-    <artifactId>catalog-harvest-sourceharvester</artifactId>
+    <name>DDF :: Catalog :: Harvest :: Directory Monitor</name>
+    <artifactId>catalog-harvest-directorymonitor</artifactId>
     <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-persistentlistener</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-metacardadaptor</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-file</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-webdav</artifactId>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -62,18 +37,18 @@
             <artifactId>platform-util</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ddf.security.core</groupId>
+            <artifactId>security-core-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ddf.security</groupId>
+            <artifactId>ddf-security-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Third Party -->
-        <dependency>
-            <groupId>com.github.lookfirst</groupId>
-            <artifactId>sardine</artifactId>
-            <version>${sardine.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast</artifactId>
-            <version>${hazelcast.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-core</artifactId>
@@ -83,16 +58,6 @@
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-core-osgi</artifactId>
             <version>${camel.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
-            <version>${httpcore.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${httpclient.version}</version>
         </dependency>
     </dependencies>
 
@@ -108,18 +73,9 @@
                         <Import-Package>
                             !org.apache.tools.ant,
                             !org.apache.tools.ant.types,
-                            org.apache.commons.io.comparator,
                             *
                         </Import-Package>
                         <Embed-Dependency>
-                            catalog-harvest-persistentlistener,
-                            catalog-harvest-file,
-                            catalog-harvest-webdav,
-                            catalog-harvest-common,
-                            sardine,
-                            hazelcast,
-                            httpcore,
-                            httpclient,
                             camel-core-osgi,
                             platform-util
                         </Embed-Dependency>

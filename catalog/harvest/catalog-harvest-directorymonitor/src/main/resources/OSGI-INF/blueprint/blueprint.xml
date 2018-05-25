@@ -20,16 +20,12 @@
 
     <camelContext xmlns="http://camel.apache.org/schema/blueprint" id="camelContext"/>
 
-    <reference id="metacardOnlyAdaptor" interface="org.codice.ddf.catalog.harvest.StorageAdaptor"
-               filter="(id=metacardOnlyAdaptor)"/>
-
     <cm:managed-service-factory
-        id="contentMonitor_MSF"
-        factory-pid="org.codice.ddf.catalog.harvest.SourceHarvester"
-        interface="org.codice.ddf.catalog.harvest.SourceHarvester">
-        <cm:managed-component class="org.codice.ddf.catalog.harvest.SourceHarvester"
+        id="contentDirectoryMonitor_MSF"
+        factory-pid="org.codice.ddf.catalog.harvest.directory.ContentDirectoryMonitor"
+        interface="org.codice.ddf.catalog.harvest.directory.DirectoryMonitor">
+        <cm:managed-component class="org.codice.ddf.catalog.harvest.directory.ContentDirectoryMonitor"
                               init-method="init" destroy-method="destroy">
-            <argument ref="metacardOnlyAdaptor"/>
             <argument ref="camelContext"/>
             <property name="processingMechanism" value="delete"/>
             <property name="numThreads" value="1"/>

@@ -11,7 +11,7 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.catalog.harvest;
+package org.codice.ddf.catalog.harvest.directory;
 
 import ddf.catalog.Constants;
 import java.io.Serializable;
@@ -29,7 +29,8 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.RouteDefinition;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.shiro.util.ThreadContext;
@@ -42,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * Container class for managing the configuration of a Camel Route that allows content to be
  * automatically ingested when dropped into the specified monitored directory.
  */
-public class ContentDirectoryMonitor {
+public class ContentDirectoryMonitor implements DirectoryMonitor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ContentDirectoryMonitor.class);
 
@@ -54,6 +55,10 @@ public class ContentDirectoryMonitor {
 
   private static final int MIN_READLOCK_INTERVAL_MILLISECONDS = 100;
 
+  private static final String DELETE = "delete";
+
+  private static final String MOVE = "move";
+
   private static final Security SECURITY = Security.getInstance();
 
   private final Executor configurationExecutor;
@@ -62,7 +67,7 @@ public class ContentDirectoryMonitor {
 
   private String monitoredDirectory = null;
 
-  private String processingMechanism = SourceHarvester.DELETE;
+  private String processingMechanism = DELETE;
 
   private List<RouteDefinition> routeCollection;
 
@@ -209,8 +214,8 @@ public class ContentDirectoryMonitor {
   }
 
   /** @param monitoredDirectoryPath - directory path for the monitored directory */
-  public void setMonitoredDirectoryPath(String monitoredDirectoryPath) {
-    this.monitoredDirectory = monitoredDirectoryPath;
+  public void setMonitoredLocation(String monitoredDirectoryPath) {
+    this.monitoredDirectory = stripEndingSlash(monitoredDirectoryPath);
   }
 
   /** @param processingMechanism - what to do with the files after ingest */
@@ -237,6 +242,32 @@ public class ContentDirectoryMonitor {
     this.attributeOverrides = attributeOverrideMap;
   }
 
+  /**
+   * Invoked when updates are made to the configuration of existing content monitors. This method is
+   * invoked by the container as specified by the update-strategy and update-method attributes in
+   * Blueprint XML file.
+   *
+   * @param properties - properties map for the configuration
+   */
+  public void updateCallback(Map<String, Object> properties) {
+    if (MapUtils.isNotEmpty(properties)) {
+      setProcessingMechanism(getPropertyAs(properties, "processingMechanism", String.class));
+      setMonitoredLocation(getPropertyAs(properties, "monitoredLocation", String.class));
+      setNumThreads(getPropertyAs(properties, "numThreads", Integer.class));
+      setReadLockIntervalMilliseconds(
+          getPropertyAs(properties, "readLockIntervalMilliseconds", Integer.class));
+
+      Object o = properties.get(Constants.ATTRIBUTE_OVERRIDES_KEY);
+      if (o instanceof String[]) {
+        String[] incomingAttrOverrides = (String[]) o;
+        setAttributeOverrides(Arrays.asList(incomingAttrOverrides));
+      }
+
+      destroy(0);
+      init();
+    }
+  }
+
   private String getBlackListAsRegex() {
     List<String> patterns = new ArrayList<>();
 
@@ -257,6 +288,18 @@ public class ContentDirectoryMonitor {
 
   public List<RouteDefinition> getRouteDefinitions() {
     return camelContext.getRouteDefinitions();
+  }
+
+  private <T> T getPropertyAs(Map<String, Object> properties, String key, Class<T> clazz) {
+    Object property = properties.get(key);
+    if (clazz.isInstance(property)) {
+      return clazz.cast(property);
+    }
+
+    throw new IllegalArgumentException(
+        String.format(
+            "Received invalid configuration value of [%s] for property [%s]. Expected type of [%s]",
+            property, key, clazz.getName()));
   }
 
   /*
@@ -324,10 +367,10 @@ public class ContentDirectoryMonitor {
         }
 
         switch (processingMechanism) {
-          case SourceHarvester.DELETE:
+          case DELETE:
             stringBuilder.append("&delete=true");
             break;
-          case SourceHarvester.MOVE:
+          case MOVE:
             stringBuilder.append("&move=.ingested");
             break;
           default:
@@ -361,5 +404,19 @@ public class ContentDirectoryMonitor {
     public void process(Exchange exchange) {
       ThreadContext.bind(SECURITY.getSystemSubject());
     }
+  }
+
+  /**
+   * Strips the trailing slash from the harvest location, if it exists. This will treat, for
+   * example, "/foo/bar" and "/foo/bar/" the same from a persistence tracking standpoint.
+   *
+   * @param location harvest location
+   * @return new string with strip slashed
+   */
+  private String stripEndingSlash(String location) {
+    if (location.endsWith("/")) {
+      return location.substring(0, location.length() - 1);
+    }
+    return location;
   }
 }

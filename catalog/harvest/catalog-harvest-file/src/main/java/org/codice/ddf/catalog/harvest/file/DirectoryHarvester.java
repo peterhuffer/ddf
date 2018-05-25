@@ -14,16 +14,26 @@
 package org.codice.ddf.catalog.harvest.file;
 
 import com.google.common.hash.Hashing;
+import ddf.catalog.Constants;
 import java.io.File;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.security.AccessControlException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.codice.ddf.catalog.harvest.Listener;
+import org.codice.ddf.catalog.harvest.StorageAdaptor;
 import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
 import org.codice.ddf.catalog.harvest.common.PollingHarvester;
+import org.codice.ddf.catalog.harvest.listeners.PersistentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,57 +49,46 @@ public class DirectoryHarvester extends PollingHarvester {
 
   private final Set<Listener> listeners = Collections.synchronizedSet(new HashSet<>());
 
-  private final File harvestFile;
+  private final StorageAdaptor adaptor;
 
-  private final FileSystemPersistenceProvider fileSystemPersistenceProvider;
+  private Map<String, Serializable> attributeOverrides = new HashMap<>();
 
-  private final FileAlterationObserver fileAlterationObserver;
+  private String directoryPath;
 
-  private final FileAlterationListenerAdaptor fileListener;
+  private File harvestFile;
 
-  private final String persistenceKey;
+  private FileSystemPersistenceProvider fileSystemPersistenceProvider;
 
-  /**
-   * Creates and starts a {@link org.codice.ddf.catalog.harvest.Harvester} that harvests a
-   * directory.
-   *
-   * @param dir an absolute path to a directory
-   */
-  public DirectoryHarvester(String dir) {
-    this(dir, Collections.emptySet());
-  }
+  private FileAlterationObserver fileAlterationObserver;
+
+  private FileAlterationListenerAdaptor fileListener;
+
+  private String persistenceKey;
 
   /**
-   * Creates and starts a {@link org.codice.ddf.catalog.harvest.Harvester} that harvests a
-   * directory.
+   * Constructor. Does not start polling.
    *
-   * @param dir an absolute path to a directory
-   * @param initialListeners initial set of {@link Listener}s
+   * @param adaptor {@link StorageAdaptor} defining out content is stored
    */
-  public DirectoryHarvester(String dir, Set<Listener> initialListeners) {
-    this(dir, DEFAULT_POLL_INTERVAL, initialListeners);
-  }
-
-  /**
-   * Creates and starts a {@link org.codice.ddf.catalog.harvest.Harvester} that harvests a
-   * directory.
-   *
-   * @param dir an absolute path to a directory
-   * @param pollInterval time in seconds to poll the directory for changes
-   * @param initialListeners initial set of {@link Listener}s
-   */
-  public DirectoryHarvester(String dir, long pollInterval, Set<Listener> initialListeners) {
-    super(pollInterval);
-    harvestFile = new File(dir);
-    validateDirectory(dir);
-    persistenceKey = Hashing.sha256().hashString(dir, StandardCharsets.UTF_8).toString();
-
-    initialListeners.forEach(this::registerListener);
+  public DirectoryHarvester(StorageAdaptor adaptor) {
+    super(DEFAULT_POLL_INTERVAL);
+    this.adaptor = adaptor;
     fileSystemPersistenceProvider = new FileSystemPersistenceProvider("harvest/directory");
-    fileAlterationObserver = getCachedObserverOrCreate(persistenceKey, dir);
     fileListener = new DirectoryHarvesterListenerAdaptor(listeners);
+  }
 
+  public void init() {
+    harvestFile = new File(directoryPath);
+    validateDirectory(directoryPath);
+    persistenceKey = Hashing.sha256().hashString(directoryPath, StandardCharsets.UTF_8).toString();
+
+    registerListener(new PersistentListener(adaptor, persistenceKey));
+    fileAlterationObserver = getCachedObserverOrCreate(persistenceKey, directoryPath);
     super.init();
+  }
+
+  public void destroy(int code) {
+    super.destroy();
   }
 
   private FileAlterationObserver getCachedObserverOrCreate(String key, String dir) {
@@ -125,22 +124,97 @@ public class DirectoryHarvester extends PollingHarvester {
     listeners.remove(listener);
   }
 
+  /**
+   * Invoked when updates are made to the configuration of existing WebDav monitors. This method is
+   * invoked by the container as specified by the update-strategy and update-method attributes in
+   * Blueprint XML file.
+   *
+   * @param properties - properties map for the configuration
+   */
+  public void updateCallback(Map<String, Object> properties) {
+    if (MapUtils.isNotEmpty(properties)) {
+      setDirectoryPath(getPropertyAs(properties, "directoryPath", String.class));
+
+      Object o = properties.get(Constants.ATTRIBUTE_OVERRIDES_KEY);
+      if (o instanceof String[]) {
+        String[] incomingAttrOverrides = (String[]) o;
+        setAttributeOverrides(Arrays.asList(incomingAttrOverrides));
+      }
+
+      destroy(0);
+      init();
+    }
+  }
+
+  private <T> T getPropertyAs(Map<String, Object> properties, String key, Class<T> clazz) {
+    Object property = properties.get(key);
+    if (clazz.isInstance(property)) {
+      return clazz.cast(property);
+    }
+
+    throw new IllegalArgumentException(
+        String.format(
+            "Received invalid configuration value of [%s] for property [%s]. Expected type of [%s]",
+            property, key, clazz.getName()));
+  }
+
   private void validateDirectory(String dir) {
-    // TODO catch AccessControlException
-    if (!harvestFile.exists()) {
-      LOGGER.warn("File [{}] does not exist.", dir);
-      throw new IllegalArgumentException(String.format("File [%s] does not exist.", dir));
-    }
+    try {
+      if (!harvestFile.exists()) {
+        LOGGER.warn("File [{}] does not exist.", dir);
+        throw new IllegalArgumentException(String.format("File [%s] does not exist.", dir));
+      }
 
-    if (!harvestFile.isDirectory()) {
-      LOGGER.warn("File [{}] is not a directory.", dir);
-      throw new IllegalArgumentException(String.format("File [%s] is not a directory.", dir));
-    }
+      if (!harvestFile.isDirectory()) {
+        LOGGER.warn("File [{}] is not a directory.", dir);
+        throw new IllegalArgumentException(String.format("File [%s] is not a directory.", dir));
+      }
 
-    if (!harvestFile.canRead()) {
-      LOGGER.warn("Insufficient read privileges from [{}].", dir);
+      if (!harvestFile.canRead()) {
+        LOGGER.warn("Insufficient read privileges from [{}].", dir);
+        throw new IllegalArgumentException(
+            String.format("Insufficient read privileges from [%s].", dir));
+      }
+    } catch (AccessControlException e) {
       throw new IllegalArgumentException(
-          String.format("Insufficient read privileges from [%s].", dir));
+          String.format(
+              "Directory [%s] cannot be accessed. Do security manager permissions need to be added?",
+              dir),
+          e);
     }
+  }
+
+  public void setAttributeOverrides(List<String> incomingAttrOverrides) {
+    attributeOverrides.clear();
+
+    for (String keyValuePair : incomingAttrOverrides) {
+      String[] parts = keyValuePair.split("=");
+
+      if (parts.length != 2) {
+        throw new IllegalArgumentException(
+            String.format("Invalid attribute override key value pair of [%s].", keyValuePair));
+      }
+
+      attributeOverrides.put(parts[0], parts[1]);
+    }
+  }
+
+  public void setDirectoryPath(String directoryPath) {
+    this.directoryPath = stripEndingSlash(directoryPath);
+  }
+
+  /**
+   * Strips the trailing slash from the harvest location, if it exists. This will treat, for
+   * example, "http://localhost:8080/" and "http://localhost:8080" the same from a persistence
+   * tracking standpoint.
+   *
+   * @param location harvest location
+   * @return new string with strip slashed
+   */
+  private String stripEndingSlash(String location) {
+    if (location.endsWith("/")) {
+      return location.substring(0, location.length() - 1);
+    }
+    return location;
   }
 }

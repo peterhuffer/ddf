@@ -169,10 +169,6 @@ grant codeBase "file:/org.apache.karaf.shell.core/org.apache.shiro.core" {
     permission java.io.FilePermission "<<ALL FILES>>", "read,write";
 }
 
-grant codeBase "file:/catalog-harvest-webdav" {
-    permission java.io.FilePermission "${ddf.home.perm}etc${/}keystores${/}-", "read";
-}
-
 grant codeBase "file:/catalog-core-commands" {
     permission java.io.FilePermission "<<ALL FILES>>", "read,write";
 }
@@ -358,7 +354,7 @@ grant codeBase "file:/catalog-plugin-videothumbnail" {
     permission java.io.FilePermission "${ddf.home.perm}bin_third_party${/}-", "read,write,execute";
 }
 
-grant codeBase "file:/catalog-transformer-zip/org.apache.commons.net/catalog-core-camelcomponent/org.apache.camel.camel-sjms/org.apache.commons.pool" {
+grant codeBase "file:/catalog-transformer-zip/org.apache.commons.net/catalog-core-camelcomponent/org.apache.camel.camel-sjms/org.apache.commons.pool/catalog-harvest-metacardadaptor/catalog-harvest-file/catalog-harvest-webdav" {
     permission java.io.FilePermission "${ddf.home.perm}etc${/}ws-security${/}server${/}-", "read";
     permission java.io.FilePermission "${ddf.home.perm}etc${/}keystores${/}-", "read";
 }

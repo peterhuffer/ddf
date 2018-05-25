@@ -57,6 +57,8 @@ public class WebDavHarvester extends PollingHarvester {
 
   private final StorageAdaptor storageAdaptor;
 
+  private Map<String, Serializable> attributeOverrides = new HashMap<>();
+
   private String persistentKey;
 
   private DavAlterationObserver observer;
@@ -64,8 +66,6 @@ public class WebDavHarvester extends PollingHarvester {
   private FileSystemPersistenceProvider persistenceProvider;
 
   private String webdavAddress;
-
-  private Map<String, Serializable> attributeOverrides = new HashMap<>();
 
   /** Creates a WebDav {@link Harvester} which will harvest products from the provided address. */
   public WebDavHarvester(StorageAdaptor storageAdaptor) {

@@ -17,7 +17,6 @@ import com.google.common.collect.ImmutableList;
 import ddf.catalog.Constants;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +26,6 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.codice.ddf.catalog.harvest.file.DirectoryHarvester;
-import org.codice.ddf.catalog.harvest.listeners.PersistentListener;
 import org.codice.ddf.catalog.harvest.webdav.WebDavHarvester;
 
 public class SourceHarvester {
@@ -111,10 +109,7 @@ public class SourceHarvester {
     if (monitoredLocation.startsWith(HTTP)) {
       webDavHarvester = new WebDavHarvester(metacardOnlyAdaptor);
     } else {
-      inPlaceDirectoryHarvester =
-          new DirectoryHarvester(
-              location,
-              Collections.singleton(new PersistentListener(metacardOnlyAdaptor, location)));
+      inPlaceDirectoryHarvester = new DirectoryHarvester(metacardOnlyAdaptor);
     }
   }
 

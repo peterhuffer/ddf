@@ -7,6 +7,7 @@
     "mvn:ddf.catalog.harvest/catalog-harvest-webdav/${project.version}",
     "mvn:ddf.catalog.harvest/catalog-harvest-file/${project.version}",
     "mvn:ddf.catalog.harvest/catalog-harvest-directorymonitor/${project.version}",
+    "mvn:ddf.catalog.harvest/catalog-harvest-persistentlistener/${project.version}",
     "mvn:ddf.catalog.core/catalog-core-localstorageprovider/${project.version}",
     "mvn:ddf.catalog.core/catalog-core-standardframework/${project.version}",
     "mvn:ddf.catalog.core/catalog-core-urlresourcereader/${project.version}",

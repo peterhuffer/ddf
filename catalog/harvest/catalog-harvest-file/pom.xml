@@ -42,11 +42,6 @@
             <artifactId>platform-util</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-persistentlistener</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- Third Party Dependencies -->
         <dependency>
@@ -80,7 +75,6 @@
                             *
                         </Import-Package>
                         <Embed-Dependency>
-                            catalog-harvest-persistentlistener,
                             catalog-harvest-common,
                             hazelcast,
                             platform-util

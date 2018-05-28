@@ -658,5 +658,10 @@
             <artifactId>catalog-harvest-directorymonitor</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ddf.catalog.harvest</groupId>
+            <artifactId>catalog-harvest-persistentlistener</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

@@ -21,17 +21,24 @@
   <reference id="metacardOnlyAdaptor" interface="org.codice.ddf.catalog.harvest.StorageAdaptor"
     filter="(id=metacardOnlyAdaptor)"/>
 
+  <bean id="persistentListenerServiceNotifier"
+    class="org.codice.ddf.catalog.harvest.listeners.PersistentListenerServiceNotifier"/>
+
+  <reference-list id="harvesters" interface="org.codice.ddf.catalog.harvest.Harvester"
+    availability="optional">
+    <reference-listener ref="persistentListenerServiceNotifier" bind-method="bind"
+      unbind-method="unbind"/>
+  </reference-list>
+
   <cm:managed-service-factory
-    id="webDavHarvester_MSF"
-    factory-pid="org.codice.ddf.catalog.harvest.webdav.WebDavHarvester"
-    interface="org.codice.ddf.catalog.harvest.Harvester">
-    <cm:managed-component class="org.codice.ddf.catalog.harvest.webdav.WebDavHarvester"
+    id="persistentListener_MSF"
+    factory-pid="org.codice.ddf.catalog.harvest.listeners.PersistentListener"
+    interface="org.codice.ddf.catalog.harvest.Listener">
+    <cm:managed-component class="org.codice.ddf.catalog.harvest.listeners.PersistentListener"
       init-method="init" destroy-method="destroy">
+      <argument ref="metacardOnlyAdaptor"/>
+      <argument ref="persistentListenerServiceNotifier"/>
       <property name="id" value=""/>
-      <property name="webdavAddress" value=""/>
-      <property name="attributeOverrides">
-        <list/>
-      </property>
 
       <cm:managed-properties persistent-id="" update-strategy="component-managed"
         update-method="updateCallback"/>

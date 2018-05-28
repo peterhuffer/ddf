@@ -43,4 +43,7 @@ public interface Harvester {
    * @param listener the {@link Listener} to unregister
    */
   void unregisterListener(Listener listener);
+
+  /** A unique, human-readable identifier. */
+  String getId();
 }

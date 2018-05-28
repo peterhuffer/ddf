@@ -16,11 +16,17 @@
 
   <OCD name="WebDav Content Monitor"
     id="org.codice.ddf.catalog.harvest.webdav.WebDavHarvester">
+    <AD
+      description="A unique human-readable identifier."
+      name="ID" id="id"
+      type="String" default=""/>
+
     <AD description="Specifies the location to be monitored in the form of an HTTP WebDav address."
       name="WebDav Address" id="webdavAddress"
       type="String" default=""/>
 
-    <AD description="Optional: Metacard attribute overrides (Key-Value pairs) that can be set on the WebDav monitor. If an attribute is specified here, it will overwrite the metacard's attribute that was created from the WebDav server. The format should be 'key=value'. To specify multiple values for a key, add each value as a separate Key-Value pair."
+    <AD
+      description="Optional: Metacard attribute overrides (Key-Value pairs) that can be set on the WebDav monitor. If an attribute is specified here, it will overwrite the metacard's attribute that was created from the WebDav server. The format should be 'key=value'. To specify multiple values for a key, add each value as a separate Key-Value pair."
       name="Attribute Overrides" id="attributeOverrides" required="false" type="String"
       cardinality="100"/>
   </OCD>

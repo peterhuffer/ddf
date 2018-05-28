@@ -15,9 +15,12 @@ package org.codice.ddf.catalog.harvest.listeners;
 
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codice.ddf.catalog.harvest.HarvestException;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
+import org.codice.ddf.catalog.harvest.Harvester;
 import org.codice.ddf.catalog.harvest.Listener;
 import org.codice.ddf.catalog.harvest.StorageAdaptor;
 import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
@@ -34,20 +37,35 @@ public class PersistentListener implements Listener {
 
   private final StorageAdaptor adaptor;
 
-  private final FileSystemPersistenceProvider persistenceProvider;
+  private final PersistentListenerServiceNotifier persistentListenerServiceNotifier;
+
+  private FileSystemPersistenceProvider persistenceProvider;
+
+  private String id;
 
   /**
    * Constructor.
    *
    * @param adaptor the {@link StorageAdaptor} to send CUD events to
-   * @param pid a unique id for persisting
    */
-  public PersistentListener(StorageAdaptor adaptor, String pid) {
+  public PersistentListener(
+      StorageAdaptor adaptor, PersistentListenerServiceNotifier persistentListenerServiceNotifier) {
     this.adaptor = adaptor;
+    this.persistentListenerServiceNotifier = persistentListenerServiceNotifier;
+  }
+
+  public void init() {
     persistenceProvider =
         new FileSystemPersistenceProvider(
             "harvest/persistent/"
-                + Hashing.sha256().hashString(pid, StandardCharsets.UTF_8).toString());
+                + Hashing.sha256().hashString(id, StandardCharsets.UTF_8).toString());
+    persistentListenerServiceNotifier.addListener(this);
+  }
+
+  @SuppressWarnings(
+      "squid:S1172" /* The code parameter is required in blueprint-cm-1.0.7. See https://issues.apache.org/jira/browse/ARIES-1436. */)
+  public void destroy(int code) {
+    persistentListenerServiceNotifier.removeListener(this);
   }
 
   @Override
@@ -107,6 +125,49 @@ public class PersistentListener implements Listener {
             e);
       }
     }
+  }
+
+  /**
+   * Invoked when updates are made to the configuration of existing WebDav monitors. This method is
+   * invoked by the container as specified by the update-strategy and update-method attributes in
+   * Blueprint XML file.
+   *
+   * @param properties - properties map for the configuration
+   */
+  public void updateCallback(Map<String, Object> properties) {
+    if (MapUtils.isNotEmpty(properties)) {
+      setId(getPropertyAs(properties, "id", String.class));
+    }
+  }
+
+  public void registerHarvester(Harvester harvester) {
+    if (harvester.getId().equals(id)) {
+      // This harvester is our corresponding match for this listener
+      harvester.registerListener(this);
+    }
+  }
+
+  public void unregisterHarvester(Harvester harvester) {
+    if (harvester.getId().equals(id)) {
+      // This harvester is our corresponding match for this listener
+      harvester.unregisterListener(this);
+    }
+  }
+
+  private <T> T getPropertyAs(Map<String, Object> properties, String key, Class<T> clazz) {
+    Object property = properties.get(key);
+    if (clazz.isInstance(property)) {
+      return clazz.cast(property);
+    }
+
+    throw new IllegalArgumentException(
+        String.format(
+            "Received invalid configuration value of [%s] for property [%s]. Expected type of [%s]",
+            property, key, clazz.getName()));
+  }
+
+  public void setId(String id) {
+    this.id = id;
   }
 
   private boolean resourceNotCreated(String resourcePid) {

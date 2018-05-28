@@ -24,7 +24,7 @@
 
     <name>DDF :: Catalog :: Harvest :: Persistent Listener</name>
     <artifactId>catalog-harvest-persistentlistener</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
@@ -37,6 +37,11 @@
             <artifactId>catalog-harvest-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ddf.platform.util</groupId>
+            <artifactId>platform-util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Third Party -->
         <dependency>
@@ -44,10 +49,30 @@
             <artifactId>hazelcast</artifactId>
             <version>${hazelcast.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>${osgi.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Export-Package/>
+                        <Embed-Dependency>
+                            catalog-harvest-common,
+                            hazelcast,
+                            platform-util
+                        </Embed-Dependency>
+                    </instructions>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>

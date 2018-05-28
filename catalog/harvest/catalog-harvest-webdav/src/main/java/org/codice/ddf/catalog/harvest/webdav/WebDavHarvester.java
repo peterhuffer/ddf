@@ -36,11 +36,9 @@ import org.apache.commons.collections.MapUtils;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
 import org.codice.ddf.catalog.harvest.Harvester;
 import org.codice.ddf.catalog.harvest.Listener;
-import org.codice.ddf.catalog.harvest.StorageAdaptor;
 import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
 import org.codice.ddf.catalog.harvest.common.HarvestedFile;
 import org.codice.ddf.catalog.harvest.common.PollingHarvester;
-import org.codice.ddf.catalog.harvest.listeners.PersistentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,9 +53,9 @@ public class WebDavHarvester extends PollingHarvester {
 
   private final Sardine sardine = SardineFactory.begin();
 
-  private final StorageAdaptor storageAdaptor;
-
   private Map<String, Serializable> attributeOverrides = new HashMap<>();
+
+  private String id;
 
   private String persistentKey;
 
@@ -68,9 +66,8 @@ public class WebDavHarvester extends PollingHarvester {
   private String webdavAddress;
 
   /** Creates a WebDav {@link Harvester} which will harvest products from the provided address. */
-  public WebDavHarvester(StorageAdaptor storageAdaptor) {
+  public WebDavHarvester() {
     super(5L);
-    this.storageAdaptor = storageAdaptor;
     persistenceProvider = new FileSystemPersistenceProvider("harvest/webdav");
   }
 
@@ -86,13 +83,19 @@ public class WebDavHarvester extends PollingHarvester {
     return new DavAlterationObserver(new DavEntry(rootEntryLocation));
   }
 
+  /**
+   * The {@code WebDavHarvester} will only begin sending events when {@link Listener}s are
+   * available, after which events will start being recorded.
+   */
   @Override
   public void poll() {
-    observer.addListener(webdavListener);
-    observer.checkAndNotify(sardine);
-    // Remove listener before persisting to file system since it is not serializable
-    observer.removeListener(webdavListener);
-    persistenceProvider.store(persistentKey, observer);
+    if (!listeners.isEmpty()) {
+      observer.addListener(webdavListener);
+      observer.checkAndNotify(sardine);
+      // Remove listener before persisting to file system since it is not serializable
+      observer.removeListener(webdavListener);
+      persistenceProvider.store(persistentKey, observer);
+    }
   }
 
   @Override
@@ -107,13 +110,17 @@ public class WebDavHarvester extends PollingHarvester {
   public void init() {
     persistentKey = Hashing.sha256().hashString(webdavAddress, StandardCharsets.UTF_8).toString();
     observer = getCachedObserverOrCreate(persistentKey, webdavAddress);
-    this.registerListener(new PersistentListener(storageAdaptor, webdavAddress));
     super.init();
   }
 
   @Override
   public void unregisterListener(Listener listener) {
     listeners.remove(listener);
+  }
+
+  @Override
+  public String getId() {
+    return id;
   }
 
   private class HarvestedResourceListener implements EntryAlterationListener {
@@ -188,6 +195,7 @@ public class WebDavHarvester extends PollingHarvester {
   public void updateCallback(Map<String, Object> properties) {
     if (MapUtils.isNotEmpty(properties)) {
       setWebdavAddress(getPropertyAs(properties, "webdavAddress", String.class));
+      setId(getPropertyAs(properties, "id", String.class));
 
       Object o = properties.get(Constants.ATTRIBUTE_OVERRIDES_KEY);
       if (o instanceof String[]) {
@@ -235,6 +243,10 @@ public class WebDavHarvester extends PollingHarvester {
 
   public void setWebdavAddress(String webdavAddress) {
     this.webdavAddress = stripEndingSlash(webdavAddress);
+  }
+
+  public void setId(String id) {
+    this.id = id;
   }
 
   /**

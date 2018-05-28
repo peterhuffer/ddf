@@ -33,11 +33,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ddf.catalog.harvest</groupId>
-            <artifactId>catalog-harvest-persistentlistener</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>ddf.platform.util</groupId>
             <artifactId>platform-util</artifactId>
             <version>${project.version}</version>
@@ -81,11 +76,9 @@
                             *
                         </Import-Package>
                         <Embed-Dependency>
-                            catalog-harvest-persistentlistener,
                             catalog-harvest-common,
                             sardine,
                             hazelcast,
-                            <!--TODO still need httpcore and httpclient? -->
                             httpcore,
                             httpclient,
                             platform-util

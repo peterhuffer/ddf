@@ -33,7 +33,6 @@ import org.codice.ddf.catalog.harvest.Listener;
 import org.codice.ddf.catalog.harvest.StorageAdaptor;
 import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
 import org.codice.ddf.catalog.harvest.common.PollingHarvester;
-import org.codice.ddf.catalog.harvest.listeners.PersistentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,9 +48,9 @@ public class DirectoryHarvester extends PollingHarvester {
 
   private final Set<Listener> listeners = Collections.synchronizedSet(new HashSet<>());
 
-  private final StorageAdaptor adaptor;
-
   private Map<String, Serializable> attributeOverrides = new HashMap<>();
+
+  private String id;
 
   private String directoryPath;
 
@@ -67,12 +66,9 @@ public class DirectoryHarvester extends PollingHarvester {
 
   /**
    * Constructor. Does not start polling.
-   *
-   * @param adaptor {@link StorageAdaptor} defining out content is stored
    */
-  public DirectoryHarvester(StorageAdaptor adaptor) {
+  public DirectoryHarvester() {
     super(DEFAULT_POLL_INTERVAL);
-    this.adaptor = adaptor;
     fileSystemPersistenceProvider = new FileSystemPersistenceProvider("harvest/directory");
     fileListener = new DirectoryHarvesterListenerAdaptor(listeners);
   }
@@ -81,8 +77,6 @@ public class DirectoryHarvester extends PollingHarvester {
     harvestFile = new File(directoryPath);
     validateDirectory(directoryPath);
     persistenceKey = Hashing.sha256().hashString(directoryPath, StandardCharsets.UTF_8).toString();
-
-    registerListener(new PersistentListener(adaptor, persistenceKey));
     fileAlterationObserver = getCachedObserverOrCreate(persistenceKey, directoryPath);
     super.init();
   }
@@ -101,13 +95,19 @@ public class DirectoryHarvester extends PollingHarvester {
     return new FileAlterationObserver(dir);
   }
 
+  /**
+   * The {@code DirectoryHarvestor} will only begin sending events when {@link Listener}s are
+   * available, after which events will start being recorded.
+   */
   @Override
   public void poll() {
-    fileAlterationObserver.addListener(fileListener);
-    fileAlterationObserver.checkAndNotify();
-    // Remove listener before persisting to file system since it is not serializable
-    fileAlterationObserver.removeListener(fileListener);
-    fileSystemPersistenceProvider.store(persistenceKey, fileAlterationObserver);
+    if (!listeners.isEmpty()) {
+      fileAlterationObserver.addListener(fileListener);
+      fileAlterationObserver.checkAndNotify();
+      // Remove listener before persisting to file system since it is not serializable
+      fileAlterationObserver.removeListener(fileListener);
+      fileSystemPersistenceProvider.store(persistenceKey, fileAlterationObserver);
+    }
   }
 
   @Override
@@ -124,6 +124,11 @@ public class DirectoryHarvester extends PollingHarvester {
     listeners.remove(listener);
   }
 
+  @Override
+  public String getId() {
+    return id;
+  }
+
   /**
    * Invoked when updates are made to the configuration of existing WebDav monitors. This method is
    * invoked by the container as specified by the update-strategy and update-method attributes in
@@ -134,6 +139,7 @@ public class DirectoryHarvester extends PollingHarvester {
   public void updateCallback(Map<String, Object> properties) {
     if (MapUtils.isNotEmpty(properties)) {
       setDirectoryPath(getPropertyAs(properties, "directoryPath", String.class));
+      setId(getPropertyAs(properties, "id", String.class));
 
       Object o = properties.get(Constants.ATTRIBUTE_OVERRIDES_KEY);
       if (o instanceof String[]) {
@@ -201,6 +207,10 @@ public class DirectoryHarvester extends PollingHarvester {
 
   public void setDirectoryPath(String directoryPath) {
     this.directoryPath = stripEndingSlash(directoryPath);
+  }
+
+  public void setId(String id) {
+    this.id = id;
   }
 
   /**

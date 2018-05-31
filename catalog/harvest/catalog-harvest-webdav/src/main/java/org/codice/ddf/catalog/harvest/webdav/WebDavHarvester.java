@@ -15,6 +15,7 @@ package org.codice.ddf.catalog.harvest.webdav;
 
 import com.github.sardine.Sardine;
 import com.github.sardine.SardineFactory;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
 import ddf.catalog.Constants;
 import ddf.security.common.audit.SecurityLogger;
@@ -174,8 +175,11 @@ public class WebDavHarvester extends PollingHarvester {
 
       try {
         SecurityLogger.audit("Opening file {}", file.toPath());
+        Map<String, Object> properties =
+            ImmutableMap.of(Constants.ATTRIBUTE_OVERRIDES_KEY, attributeOverrides);
         return Optional.of(
-            new HarvestedFile(new FileInputStream(file), file.getName(), entry.getLocation()));
+            new HarvestedFile(
+                new FileInputStream(file), file.getName(), entry.getLocation(), properties));
       } catch (FileNotFoundException e) {
         LOGGER.debug(
             "Failed to get input stream from file [{}]. Event will not be sent to listener",

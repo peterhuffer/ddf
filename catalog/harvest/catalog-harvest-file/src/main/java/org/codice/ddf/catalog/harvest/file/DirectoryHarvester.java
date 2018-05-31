@@ -30,7 +30,6 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.codice.ddf.catalog.harvest.Listener;
-import org.codice.ddf.catalog.harvest.StorageAdaptor;
 import org.codice.ddf.catalog.harvest.common.FileSystemPersistenceProvider;
 import org.codice.ddf.catalog.harvest.common.PollingHarvester;
 import org.slf4j.Logger;
@@ -64,9 +63,7 @@ public class DirectoryHarvester extends PollingHarvester {
 
   private String persistenceKey;
 
-  /**
-   * Constructor. Does not start polling.
-   */
+  /** Constructor. Does not start polling. */
   public DirectoryHarvester() {
     super(DEFAULT_POLL_INTERVAL);
     fileSystemPersistenceProvider = new FileSystemPersistenceProvider("harvest/directory");

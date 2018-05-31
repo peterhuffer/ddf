@@ -17,19 +17,33 @@ import ddf.catalog.resource.impl.ResourceImpl;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.Map;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
 
 public class HarvestedFile extends ResourceImpl implements HarvestedResource {
 
   private final URI uri;
 
+  private final Map<String, Object> properties;
+
   public HarvestedFile(InputStream is, String name, String uri) {
+    this(is, name, uri, Collections.emptyMap());
+  }
+
+  public HarvestedFile(InputStream is, String name, String uri, Map<String, Object> properties) {
     super(is, name);
     try {
       this.uri = new URI(uri);
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException(String.format("Invalid URI [%s] received.", uri));
     }
+    this.properties = properties;
+  }
+
+  @Override
+  public Map<String, Object> getProperties() {
+    return properties;
   }
 
   @Override

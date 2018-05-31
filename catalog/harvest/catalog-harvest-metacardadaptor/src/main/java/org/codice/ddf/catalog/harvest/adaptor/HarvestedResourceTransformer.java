@@ -14,7 +14,10 @@
 package org.codice.ddf.catalog.harvest.adaptor;
 
 import com.google.common.io.ByteSource;
+import ddf.catalog.Constants;
 import ddf.catalog.data.Attribute;
+import ddf.catalog.data.AttributeDescriptor;
+import ddf.catalog.data.AttributeRegistry;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.AttributeImpl;
 import ddf.catalog.data.types.Core;
@@ -25,10 +28,20 @@ import ddf.mime.MimeTypeResolutionException;
 import ddf.mime.MimeTypeToTransformerMapper;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.annotation.Nullable;
+import javax.xml.bind.DatatypeConverter;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -48,14 +61,20 @@ public class HarvestedResourceTransformer {
 
   private final MimeTypeMapper mimeTypeMapper;
 
+  private final AttributeRegistry attributeRegistry;
+
   public HarvestedResourceTransformer(
-      MimeTypeToTransformerMapper mimeTypeToTransformerMapper, MimeTypeMapper mimeTypeMapper) {
+      MimeTypeToTransformerMapper mimeTypeToTransformerMapper,
+      MimeTypeMapper mimeTypeMapper,
+      AttributeRegistry attributeRegistry) {
     Validate.notNull(
         mimeTypeToTransformerMapper, "Argument mimeTypeToTransformerMapper may not be null");
     Validate.notNull(mimeTypeMapper, "Argument mimeTypeMapper may not be null");
+    Validate.notNull(attributeRegistry, "Argument attributeRegistry may not be null");
 
     this.mimeTypeToTransformerMapper = mimeTypeToTransformerMapper;
     this.mimeTypeMapper = mimeTypeMapper;
+    this.attributeRegistry = attributeRegistry;
   }
 
   /**
@@ -103,7 +122,11 @@ public class HarvestedResourceTransformer {
             doTransform(byteSource, metacardId, inputTransformer, harvestedResource);
 
         if (metacardOptional.isPresent()) {
-          return metacardOptional.get();
+          Metacard metacard = metacardOptional.get();
+          Map<String, Serializable> attributeOverrides =
+              (Map) harvestedResource.getProperties().get(Constants.ATTRIBUTE_OVERRIDES_KEY);
+          overrideAttributes(metacard, attributeOverrides);
+          return metacard;
         }
       }
 
@@ -184,5 +207,70 @@ public class HarvestedResourceTransformer {
       return;
     }
     metacard.setAttribute(new AttributeImpl(attributeName, attributeValue));
+  }
+
+  private void overrideAttributes(Metacard metacard, Map<String, Serializable> attributeOverrides) {
+    if (MapUtils.isEmpty(attributeOverrides)) {
+      return;
+    }
+
+    attributeOverrides
+        .keySet()
+        .stream()
+        .map(attributeRegistry::lookup)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(ad -> overrideAttributeValue(ad, attributeOverrides.get(ad.getName())))
+        .filter(Objects::nonNull)
+        .forEach(metacard::setAttribute);
+  }
+
+  private AttributeImpl overrideAttributeValue(
+      AttributeDescriptor attributeDescriptor, Serializable overrideValue) {
+    List<Serializable> newValue = new ArrayList<>();
+    for (Object o :
+        overrideValue instanceof List
+            ? (List) overrideValue
+            : Collections.singletonList(overrideValue)) {
+      try {
+        String override = String.valueOf(o);
+        switch (attributeDescriptor.getType().getAttributeFormat()) {
+          case INTEGER:
+            newValue.add(Integer.parseInt(override));
+            break;
+          case FLOAT:
+            newValue.add(Float.parseFloat(override));
+            break;
+          case DOUBLE:
+            newValue.add(Double.parseDouble(override));
+            break;
+          case SHORT:
+            newValue.add(Short.parseShort(override));
+            break;
+          case LONG:
+            newValue.add(Long.parseLong(override));
+            break;
+          case DATE:
+            Calendar calendar = DatatypeConverter.parseDateTime(override);
+            newValue.add(calendar.getTime());
+            break;
+          case BOOLEAN:
+            newValue.add(Boolean.parseBoolean(override));
+            break;
+          case BINARY:
+            newValue.add(override.getBytes(Charset.forName("UTF-8")));
+            break;
+          case OBJECT:
+          case STRING:
+          case GEOMETRY:
+          case XML:
+            newValue.add(override);
+            break;
+        }
+      } catch (IllegalArgumentException e) {
+        return null;
+      }
+    }
+    return new AttributeImpl(attributeDescriptor.getName(), newValue);
   }
 }

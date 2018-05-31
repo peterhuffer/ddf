@@ -15,6 +15,7 @@ package org.codice.ddf.catalog.harvest;
 
 import ddf.catalog.resource.Resource;
 import java.net.URI;
+import java.util.Map;
 
 /**
  * A resource harvested from an external data store.
@@ -23,6 +24,13 @@ import java.net.URI;
  * removed in a future version of the library. </b>
  */
 public interface HarvestedResource extends Resource {
+
+  /**
+   * A {@code Map} of properties associated with this {@code HarvestedResource}.
+   *
+   * @return a map of properties
+   */
+  Map<String, Object> getProperties();
 
   /**
    * The location of this {@code HarvestedResource}.

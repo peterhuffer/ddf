@@ -32,6 +32,7 @@ import org.codice.ddf.catalog.content.monitor.synchronizations.FileToMetacardMap
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("squid:MaximumInheritanceDepth" /* Inheriting mostly from third party library */)
 public class DurableWebDavFileConsumer extends AbstractDurableFileConsumer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DurableWebDavFileConsumer.class);
@@ -182,14 +183,14 @@ public class DurableWebDavFileConsumer extends AbstractDurableFileConsumer {
 
       submitExchange(exchange);
     }
-  }
 
-  private File getDavFile(DavEntry entry) {
-    try {
-      return entry.getFile(SardineFactory.begin());
-    } catch (IOException e) {
-      LOGGER.debug("Failed to get file for dav entry [{}].", entry.getLocation(), e);
-      throw new UncheckedIOException(e);
+    private File getDavFile(DavEntry entry) {
+      try {
+        return entry.getFile(SardineFactory.begin());
+      } catch (IOException e) {
+        LOGGER.debug("Failed to get file for dav entry [{}].", entry.getLocation(), e);
+        throw new UncheckedIOException(e);
+      }
     }
   }
 }

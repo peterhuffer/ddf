@@ -30,6 +30,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("squid:MaximumInheritanceDepth" /* Inheriting from third party library */)
 public abstract class AbstractDurableFileConsumer extends GenericFileConsumer<File> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDurableFileConsumer.class);

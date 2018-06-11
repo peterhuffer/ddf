@@ -42,6 +42,11 @@
             <artifactId>platform-util</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-api-impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Third Party Dependencies -->
         <dependency>
@@ -76,6 +81,7 @@
                         </Import-Package>
                         <Embed-Dependency>
                             catalog-harvest-common,
+                            catalog-core-api-impl,
                             hazelcast,
                             platform-util
                         </Embed-Dependency>

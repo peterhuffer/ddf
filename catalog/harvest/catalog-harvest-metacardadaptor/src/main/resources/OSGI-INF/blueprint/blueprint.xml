@@ -20,10 +20,13 @@
 
     <reference id="mimeTypeMapper" interface="ddf.mime.MimeTypeMapper"/>
 
+    <reference id="attributeRegistry" interface="ddf.catalog.data.AttributeRegistry"/>
+
     <bean id="harvestedResourceTransformer"
           class="org.codice.ddf.catalog.harvest.adaptor.HarvestedResourceTransformer">
         <argument ref="mimeTypeToTransformer"/>
         <argument ref="mimeTypeMapper"/>
+        <argument ref="attributeRegistry"/>
     </bean>
 
     <bean id="metacardOnlyAdaptor" class="org.codice.ddf.catalog.harvest.adaptor.MetacardOnlyAdaptor">

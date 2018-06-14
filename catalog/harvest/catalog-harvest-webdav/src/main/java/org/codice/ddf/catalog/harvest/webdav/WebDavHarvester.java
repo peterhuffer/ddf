@@ -15,15 +15,12 @@ package org.codice.ddf.catalog.harvest.webdav;
 
 import com.github.sardine.Sardine;
 import com.github.sardine.SardineFactory;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
-import ddf.catalog.Constants;
 import ddf.security.common.audit.SecurityLogger;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,7 +51,7 @@ public class WebDavHarvester extends PollingHarvester {
 
   private final Sardine sardine = SardineFactory.begin();
 
-  private Map<String, Serializable> attributeOverrides = new HashMap<>();
+  private Map<String, List<String>> attributeOverrides = new HashMap<>();
 
   private String id;
 
@@ -175,11 +172,13 @@ public class WebDavHarvester extends PollingHarvester {
 
       try {
         SecurityLogger.audit("Opening file {}", file.toPath());
-        Map<String, Object> properties =
-            ImmutableMap.of(Constants.ATTRIBUTE_OVERRIDES_KEY, attributeOverrides);
         return Optional.of(
             new HarvestedFile(
-                new FileInputStream(file), file.getName(), entry.getLocation(), properties));
+                new FileInputStream(file),
+                file.getName(),
+                entry.getLocation(),
+                attributeOverrides,
+                Collections.emptyMap()));
       } catch (FileNotFoundException e) {
         LOGGER.debug(
             "Failed to get input stream from file [{}]. Event will not be sent to listener",
@@ -201,10 +200,14 @@ public class WebDavHarvester extends PollingHarvester {
       setWebdavAddress(getPropertyAs(properties, "webdavAddress", String.class));
       setId(getPropertyAs(properties, "id", String.class));
 
-      Object o = properties.get(Constants.ATTRIBUTE_OVERRIDES_KEY);
+      final String key = "attributeOverrides";
+      Object o = properties.get(key);
       if (o instanceof String[]) {
         String[] incomingAttrOverrides = (String[]) o;
         setAttributeOverrides(Arrays.asList(incomingAttrOverrides));
+      } else {
+        throw new IllegalArgumentException(
+            String.format("Expected value for %s to be a list of Strings", key));
       }
 
       destroy(0);
@@ -230,7 +233,7 @@ public class WebDavHarvester extends PollingHarvester {
             property, key, clazz.getName()));
   }
 
-  public void setAttributeOverrides(List<String> incomingAttrOverrides) {
+  private void setAttributeOverrides(List<String> incomingAttrOverrides) {
     attributeOverrides.clear();
 
     for (String keyValuePair : incomingAttrOverrides) {
@@ -241,15 +244,22 @@ public class WebDavHarvester extends PollingHarvester {
             String.format("Invalid attribute override key value pair of [%s].", keyValuePair));
       }
 
-      attributeOverrides.put(parts[0], parts[1]);
+      final String newValue = parts[1];
+      attributeOverrides.merge(
+          parts[0],
+          Arrays.asList(newValue),
+          (oldValue, v) -> {
+            oldValue.add(newValue);
+            return oldValue;
+          });
     }
   }
 
-  public void setWebdavAddress(String webdavAddress) {
+  private void setWebdavAddress(String webdavAddress) {
     this.webdavAddress = stripEndingSlash(webdavAddress);
   }
 
-  public void setId(String id) {
+  private void setId(String id) {
     this.id = id;
   }
 

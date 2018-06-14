@@ -19,9 +19,9 @@ import javax.activation.MimeType;
 /** @author Ashraf Barakat */
 public interface MimeTypeToTransformerMapper {
 
-  public static final String MIME_TYPE_KEY = "mime-type";
+  String MIME_TYPE_KEY = "mime-type";
 
-  public static final String ID_KEY = "id";
+  String ID_KEY = "id";
 
   /**
    * @param clazz The Class type of the matching services
@@ -31,5 +31,5 @@ public interface MimeTypeToTransformerMapper {
    *     specified in the clazz argument. If no services are matched then an empty {@link List} is
    *     returned.
    */
-  public <T> List<T> findMatches(Class<T> clazz, MimeType mimeType);
+  <T> List<T> findMatches(Class<T> clazz, MimeType mimeType);
 }

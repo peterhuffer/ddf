@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
+import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -51,7 +52,7 @@ public class MimeTypeToTransformerMapperImpl implements MimeTypeToTransformerMap
   }
 
   @Override
-  public <T> List<T> findMatches(Class<T> clazz, MimeType userMimeType) {
+  public <T> List<T> findMatches(Class<T> clazz, @Nullable MimeType userMimeType) {
     BundleContext bundleContext = getContext();
     ServiceReference[] refs = null;
     List<T> list = new ArrayList<T>();

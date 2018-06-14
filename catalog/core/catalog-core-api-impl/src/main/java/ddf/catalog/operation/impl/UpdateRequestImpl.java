@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,10 +75,25 @@ public class UpdateRequestImpl extends OperationImpl implements UpdateRequest {
    * Instantiates a new UpdateRequestImpl from an id and metacard
    *
    * @param id the id of the {@link Metacard} to update
-   * @param metacard the updated {@link Metacard} value.
+   * @param metacard the updated {@link Metacard} value
    */
   public UpdateRequestImpl(String id, Metacard metacard) {
     this(new String[] {id}, Arrays.asList(metacard));
+  }
+
+  /**
+   * Instantiates a new UpdateRequestImpl from an id, metacard, and properties associated with the
+   * operation
+   *
+   * @param id the id of the {@link Metacard} to update
+   * @param metacard the updated {@link Metacard} value
+   * @param properties the properties associated with the operation
+   */
+  public UpdateRequestImpl(String id, Metacard metacard, Map<String, Serializable> properties) {
+    this(
+        formatEntryList(new String[] {id}, Collections.singletonList(metacard)),
+        UpdateRequest.UPDATE_BY_ID,
+        properties);
   }
 
   /**

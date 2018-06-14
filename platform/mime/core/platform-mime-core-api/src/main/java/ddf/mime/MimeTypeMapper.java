@@ -28,9 +28,9 @@ public interface MimeTypeMapper {
    *
    * @param contentType the mime type
    * @return the file extension mapped to the specified mime type
-   * @throws MimeTypeException if any problems encountered during mime type mapping
+   * @throws MimeTypeResolutionException if any problems encountered during mime type mapping
    */
-  public String getFileExtensionForMimeType(String contentType) throws MimeTypeResolutionException;
+  String getFileExtensionForMimeType(String contentType) throws MimeTypeResolutionException;
 
   /**
    * Retrieves the mime type for the specified file extension, e.g., returns "image/nitf" for a file
@@ -38,10 +38,9 @@ public interface MimeTypeMapper {
    *
    * @param fileExtension the file extension to look up the mime type for
    * @return the mime type mapped to the specified file extension
-   * @throws MimeTypeException if any problems encountered during mime type mapping
+   * @throws MimeTypeResolutionException if any problems encountered during mime type mapping
    */
-  public String getMimeTypeForFileExtension(String fileExtension)
-      throws MimeTypeResolutionException;
+  String getMimeTypeForFileExtension(String fileExtension) throws MimeTypeResolutionException;
 
   /**
    * Attempts to guess the mime type for the specified file extension by introspecting the supplied
@@ -53,6 +52,5 @@ public interface MimeTypeMapper {
    *     determine the mime type
    * @throws MimeTypeResolutionException if any problems encountered during mime type mapping
    */
-  public String guessMimeType(InputStream is, String fileExtension)
-      throws MimeTypeResolutionException;
+  String guessMimeType(InputStream is, String fileExtension) throws MimeTypeResolutionException;
 }

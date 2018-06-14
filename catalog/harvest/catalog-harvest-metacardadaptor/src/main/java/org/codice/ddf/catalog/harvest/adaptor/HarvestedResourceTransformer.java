@@ -14,9 +14,7 @@
 package org.codice.ddf.catalog.harvest.adaptor;
 
 import com.google.common.io.ByteSource;
-import ddf.catalog.Constants;
 import ddf.catalog.data.Attribute;
-import ddf.catalog.data.AttributeDescriptor;
 import ddf.catalog.data.AttributeRegistry;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.impl.AttributeImpl;
@@ -28,20 +26,12 @@ import ddf.mime.MimeTypeResolutionException;
 import ddf.mime.MimeTypeToTransformerMapper;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 import javax.annotation.Nullable;
-import javax.xml.bind.DatatypeConverter;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -84,26 +74,20 @@ public class HarvestedResourceTransformer {
    * @return the metacard
    * @throws HarvestException if the resource could not be transformed
    */
-  public Metacard transformHarvestedResource(HarvestedResource harvestedResource)
-      throws HarvestException {
-    return transform(harvestedResource, null);
+  Metacard transformHarvestedResource(HarvestedResource harvestedResource) throws HarvestException {
+    return transformHarvestedResource(harvestedResource, null);
   }
 
   /**
    * Creates a metacard with an update id.
    *
-   * @param resource the {@link HarvestedResource} the metacard will be created from
+   * @param harvestedResource the {@link HarvestedResource} the metacard will be created from
    * @param metacardId id of the existing metacard to update
    * @return the metacard
    * @throws HarvestException if the resource could not be transformed
    */
-  public Metacard transformHarvestedResource(HarvestedResource resource, String metacardId)
-      throws HarvestException {
-    return transform(resource, metacardId);
-  }
-
-  private Metacard transform(HarvestedResource harvestedResource, String metacardId)
-      throws HarvestException {
+  Metacard transformHarvestedResource(
+      HarvestedResource harvestedResource, @Nullable String metacardId) throws HarvestException {
     try (TemporaryFileBackedOutputStream tfbos = new TemporaryFileBackedOutputStream()) {
       IOUtils.copy(harvestedResource.getInputStream(), tfbos);
       final ByteSource byteSource = tfbos.asByteSource();
@@ -123,9 +107,9 @@ public class HarvestedResourceTransformer {
 
         if (metacardOptional.isPresent()) {
           Metacard metacard = metacardOptional.get();
-          Map<String, Serializable> attributeOverrides =
-              (Map) harvestedResource.getProperties().get(Constants.ATTRIBUTE_OVERRIDES_KEY);
-          overrideAttributes(metacard, attributeOverrides);
+          Map<String, List<String>> attributeOverrides = harvestedResource.getAttributeOverrides();
+          OverrideAttributesSupport.overrideAttributes(
+              metacard, attributeOverrides, attributeRegistry);
           return metacard;
         }
       }
@@ -144,26 +128,17 @@ public class HarvestedResourceTransformer {
 
   private Optional<Metacard> doTransform(
       final ByteSource byteSource,
-      final String metacardId,
+      @Nullable final String metacardId,
       final InputTransformer inputTransformer,
       final HarvestedResource harvestedResource)
       throws IOException {
-    try {
-      final InputStream is = byteSource.openStream();
-
-      final Metacard metacard;
+    final Metacard metacard;
+    try (final InputStream is = byteSource.openStream()) {
       if (StringUtils.isNotEmpty(metacardId)) {
         metacard = inputTransformer.transform(is, metacardId);
       } else {
         metacard = inputTransformer.transform(is);
       }
-
-      writeMetacardAttribute(metacard, Core.TITLE, harvestedResource.getName());
-      writeMetacardAttribute(
-          metacard, Core.RESOURCE_SIZE, Long.toString(harvestedResource.getSize()));
-      writeMetacardAttribute(
-          metacard, Core.RESOURCE_URI, harvestedResource.getUri().toASCIIString());
-      return Optional.of(metacard);
     } catch (CatalogTransformerException e) {
       LOGGER.trace(
           "Failed to transform resource [{}] with [{}] transformer. Trying next one.",
@@ -171,21 +146,36 @@ public class HarvestedResourceTransformer {
           inputTransformer);
       return Optional.empty();
     }
+
+    writeMetacardAttribute(metacard, Core.TITLE, harvestedResource.getName());
+    writeMetacardAttribute(
+        metacard, Core.RESOURCE_SIZE, Long.toString(harvestedResource.getSize()));
+    writeMetacardAttribute(metacard, Core.RESOURCE_URI, harvestedResource.getUri().toASCIIString());
+    return Optional.of(metacard);
   }
 
   @Nullable
   private MimeType guessMimeTypeFor(InputStream is, String fileExt) {
     try {
-      return new MimeType(mimeTypeMapper.guessMimeType(is, fileExt));
+      String guessedMimeTypeString = mimeTypeMapper.guessMimeType(is, fileExt);
+
+      if (guessedMimeTypeString != null) {
+        return new MimeType(guessedMimeTypeString);
+      } else {
+        LOGGER.debug(
+            "Cannot determine the mime type mime type for input stream [{}] with file extension [{}].",
+            is,
+            fileExt);
+        return null;
+      }
     } catch (MimeTypeResolutionException | MimeTypeParseException me) {
       LOGGER.debug(
           "Failed to get mime type for input stream [{}] with file extension [{}].",
           is,
           fileExt,
           me);
+      return null;
     }
-
-    return null;
   }
 
   /**
@@ -197,7 +187,7 @@ public class HarvestedResourceTransformer {
    * @param attributeValue attribute value to add
    */
   private void writeMetacardAttribute(
-      Metacard metacard, String attributeName, String attributeValue) {
+      Metacard metacard, String attributeName, @Nullable String attributeValue) {
     if (StringUtils.isEmpty(attributeValue)) {
       return;
     }
@@ -207,70 +197,5 @@ public class HarvestedResourceTransformer {
       return;
     }
     metacard.setAttribute(new AttributeImpl(attributeName, attributeValue));
-  }
-
-  private void overrideAttributes(Metacard metacard, Map<String, Serializable> attributeOverrides) {
-    if (MapUtils.isEmpty(attributeOverrides)) {
-      return;
-    }
-
-    attributeOverrides
-        .keySet()
-        .stream()
-        .map(attributeRegistry::lookup)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .map(ad -> overrideAttributeValue(ad, attributeOverrides.get(ad.getName())))
-        .filter(Objects::nonNull)
-        .forEach(metacard::setAttribute);
-  }
-
-  private AttributeImpl overrideAttributeValue(
-      AttributeDescriptor attributeDescriptor, Serializable overrideValue) {
-    List<Serializable> newValue = new ArrayList<>();
-    for (Object o :
-        overrideValue instanceof List
-            ? (List) overrideValue
-            : Collections.singletonList(overrideValue)) {
-      try {
-        String override = String.valueOf(o);
-        switch (attributeDescriptor.getType().getAttributeFormat()) {
-          case INTEGER:
-            newValue.add(Integer.parseInt(override));
-            break;
-          case FLOAT:
-            newValue.add(Float.parseFloat(override));
-            break;
-          case DOUBLE:
-            newValue.add(Double.parseDouble(override));
-            break;
-          case SHORT:
-            newValue.add(Short.parseShort(override));
-            break;
-          case LONG:
-            newValue.add(Long.parseLong(override));
-            break;
-          case DATE:
-            Calendar calendar = DatatypeConverter.parseDateTime(override);
-            newValue.add(calendar.getTime());
-            break;
-          case BOOLEAN:
-            newValue.add(Boolean.parseBoolean(override));
-            break;
-          case BINARY:
-            newValue.add(override.getBytes(Charset.forName("UTF-8")));
-            break;
-          case OBJECT:
-          case STRING:
-          case GEOMETRY:
-          case XML:
-            newValue.add(override);
-            break;
-        }
-      } catch (IllegalArgumentException e) {
-        return null;
-      }
-    }
-    return new AttributeImpl(attributeDescriptor.getName(), newValue);
   }
 }

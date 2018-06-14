@@ -13,11 +13,15 @@
  */
 package org.codice.ddf.catalog.harvest.common;
 
+import static org.apache.commons.lang3.Validate.notNull;
+
 import ddf.catalog.resource.impl.ResourceImpl;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.codice.ddf.catalog.harvest.HarvestedResource;
 
@@ -25,25 +29,39 @@ public class HarvestedFile extends ResourceImpl implements HarvestedResource {
 
   private final URI uri;
 
-  private final Map<String, Object> properties;
+  private Map<String, List<String>> attributeOverrides;
+
+  private final Map<String, Serializable> properties;
 
   public HarvestedFile(InputStream is, String name, String uri) {
-    this(is, name, uri, Collections.emptyMap());
+    this(is, name, uri, Collections.emptyMap(), Collections.emptyMap());
   }
 
-  public HarvestedFile(InputStream is, String name, String uri, Map<String, Object> properties) {
+  public HarvestedFile(
+      InputStream is,
+      String name,
+      String uri,
+      Map<String, List<String>> attributeOverrides,
+      Map<String, Serializable> properties) {
     super(is, name);
     try {
       this.uri = new URI(uri);
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException(String.format("Invalid URI [%s] received.", uri));
     }
-    this.properties = properties;
+
+    this.attributeOverrides = notNull(attributeOverrides);
+    this.properties = notNull(properties);
   }
 
   @Override
-  public Map<String, Object> getProperties() {
+  public Map<String, Serializable> getProperties() {
     return properties;
+  }
+
+  @Override
+  public Map<String, List<String>> getAttributeOverrides() {
+    return attributeOverrides;
   }
 
   @Override

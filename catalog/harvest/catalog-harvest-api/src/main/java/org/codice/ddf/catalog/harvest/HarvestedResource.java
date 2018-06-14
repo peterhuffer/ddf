@@ -14,7 +14,9 @@
 package org.codice.ddf.catalog.harvest;
 
 import ddf.catalog.resource.Resource;
+import java.io.Serializable;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,16 +28,22 @@ import java.util.Map;
 public interface HarvestedResource extends Resource {
 
   /**
-   * A {@code Map} of properties associated with this {@code HarvestedResource}.
-   *
-   * @return a map of properties
-   */
-  Map<String, Object> getProperties();
-
-  /**
    * The location of this {@code HarvestedResource}.
    *
    * @return a uri
    */
   URI getUri();
+
+  /**
+   * @return a {@link Map} of {@link ddf.catalog.data.Attribute} names to a {@link List} of override
+   *     values, or an empty {@link Map} if no overrides were specified
+   */
+  Map<String, List<String>> getAttributeOverrides();
+
+  /**
+   * A {@code Map} of properties associated with this {@code HarvestedResource}.
+   *
+   * @return a map of properties
+   */
+  Map<String, Serializable> getProperties();
 }

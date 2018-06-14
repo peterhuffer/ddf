@@ -13,22 +13,19 @@
  */
 package org.codice.ddf.catalog.harvest.adaptor;
 
+import com.google.common.annotations.VisibleForTesting;
 import ddf.catalog.CatalogFramework;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.operation.CreateRequest;
-import ddf.catalog.operation.CreateResponse;
 import ddf.catalog.operation.DeleteRequest;
-import ddf.catalog.operation.DeleteResponse;
 import ddf.catalog.operation.Update;
 import ddf.catalog.operation.UpdateRequest;
-import ddf.catalog.operation.UpdateResponse;
 import ddf.catalog.operation.impl.CreateRequestImpl;
 import ddf.catalog.operation.impl.DeleteRequestImpl;
 import ddf.catalog.operation.impl.UpdateRequestImpl;
 import ddf.catalog.source.IngestException;
 import ddf.catalog.source.SourceUnavailableException;
 import ddf.security.SecurityConstants;
-import ddf.security.Subject;
 import ddf.security.service.SecurityServiceException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
@@ -69,18 +66,20 @@ public class MetacardOnlyAdaptor implements StorageAdaptor {
 
   @Override
   public String create(HarvestedResource resource) throws HarvestException {
-    Metacard metacard = harvestedResourceTransformer.transformHarvestedResource(resource);
+    final Metacard metacard = harvestedResourceTransformer.transformHarvestedResource(resource);
 
-    CreateRequest createRequest =
-        new CreateRequestImpl(Collections.singletonList(metacard), getSecurityMap());
+    final Map<String, Serializable> properties = new HashMap<>(resource.getProperties());
+    properties.putAll(getSecurityMap());
+
+    final CreateRequest createRequest =
+        new CreateRequestImpl(Collections.singletonList(metacard), properties);
 
     return runWithSubjectOrDefault(
         () -> {
           try {
-            CreateResponse response;
-            response = catalogFramework.create(createRequest);
+            final List<Metacard> createdMetacards =
+                catalogFramework.create(createRequest).getCreatedMetacards();
 
-            List<Metacard> createdMetacards = response.getCreatedMetacards();
             if (createdMetacards.size() == 1) {
               return createdMetacards.get(0).getId();
             } else if (createdMetacards.isEmpty()) {
@@ -102,24 +101,25 @@ public class MetacardOnlyAdaptor implements StorageAdaptor {
 
   @Override
   public void update(HarvestedResource resource, String updateId) throws HarvestException {
-    Metacard metacard = harvestedResourceTransformer.transformHarvestedResource(resource, updateId);
+    final Metacard metacard =
+        harvestedResourceTransformer.transformHarvestedResource(resource, updateId);
 
-    UpdateRequest updateRequest = new UpdateRequestImpl(updateId, metacard);
+    final Map<String, Serializable> properties = new HashMap<>(resource.getProperties());
+    properties.putAll(getSecurityMap());
+
+    final UpdateRequest updateRequest = new UpdateRequestImpl(updateId, metacard, properties);
 
     runWithSubjectOrDefault(
         () -> {
           try {
-            UpdateResponse response;
-            response = catalogFramework.update(updateRequest);
+            final List<Update> updatedMetacard =
+                catalogFramework.update(updateRequest).getUpdatedMetacards();
 
-            List<Update> updatedMetacard = response.getUpdatedMetacards();
-            if (updatedMetacard.size() == 1) {
-              return updatedMetacard.get(0).getNewMetacard().getId();
-            } else if (updatedMetacard.isEmpty()) {
+            if (updatedMetacard.isEmpty()) {
               throw new HarvestException(
                   String.format(
                       "No metacard updates received for resource [%s]", resource.getName()));
-            } else {
+            } else if (updatedMetacard.size() > 1) {
               throw new HarvestException(
                   String.format(
                       "Multiple metacards returned for single update for resource [%s]",
@@ -129,19 +129,20 @@ public class MetacardOnlyAdaptor implements StorageAdaptor {
             throw new HarvestException(
                 String.format("Failed to update resource [%s]", resource.getName()), e);
           }
+
+          return null;
         });
   }
 
   @Override
   public void delete(String id) {
-    DeleteRequest deleteRequest = new DeleteRequestImpl(id);
+    final DeleteRequest deleteRequest = new DeleteRequestImpl(id, getSecurityMap());
 
     runWithSubjectOrDefault(
         () -> {
           try {
-            DeleteResponse response = catalogFramework.delete(deleteRequest);
-
-            List<Metacard> deletedMetacard = response.getDeletedMetacards();
+            final List<Metacard> deletedMetacard =
+                catalogFramework.delete(deleteRequest).getDeletedMetacards();
 
             if (deletedMetacard.isEmpty()) {
               throw new HarvestException(
@@ -160,7 +161,8 @@ public class MetacardOnlyAdaptor implements StorageAdaptor {
         });
   }
 
-  private <T> T runWithSubjectOrDefault(final Callable<T> callable) {
+  @VisibleForTesting
+  <T> T runWithSubjectOrDefault(final Callable<T> callable) {
     return SECURITY.runAsAdmin(
         () -> {
           try {
@@ -172,10 +174,12 @@ public class MetacardOnlyAdaptor implements StorageAdaptor {
         });
   }
 
-  private Map<String, Serializable> getSecurityMap() {
-    Subject subject = SECURITY.runAsAdmin(SECURITY::getSystemSubject);
-    Map<String, Serializable> requestArgs = new HashMap<>();
-    requestArgs.put(SecurityConstants.SECURITY_SUBJECT, subject);
-    return requestArgs;
+  @VisibleForTesting
+  Map<String, Serializable> getSecurityMap() {
+    // There are issues passing an unmodifiable map into the Catalog framework.
+    final Map<String, Serializable> securityMap = new HashMap<>(1);
+    securityMap.put(
+        SecurityConstants.SECURITY_SUBJECT, SECURITY.runAsAdmin(SECURITY::getSystemSubject));
+    return securityMap;
   }
 }

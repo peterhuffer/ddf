@@ -1,0 +1,10 @@
+:title: Configuring Harvesters
+:type: configuration
+:status: published
+:summary: Configure Harvesters
+:parent: Configuring Data Management
+:order: 035
+
+== {title}
+
+Harvesters facilitate ingesting files from an external data source into the ${ddf-catalog}.

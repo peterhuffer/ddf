@@ -1,0 +1,73 @@
+:title: Configuring File Harvesters
+:type: subConfiguration
+:status: published
+:summary: Configure File Harvesters
+:parent: Configuring Harvesters
+:order: 10
+
+== {title}
+
+File Harvesters will create metacards in the ${ddf-catalog} for files residing in the configured directory to harvest from. At any given time, the metacards in the ${ddf-catalog} will reflect the files in the monitored directory.
+
+=== Installing the File Harvester
+
+The File Harvester is installed by default with a standard installation of the ${ddf-catalog} application.
+
+=== Configuring Permissions for the File Harvester
+// This section of the docs is duplicated in ${home_directory}/security/configurations.policy. Updates
+// should be applied to both locations.
+
+[TIP]
+====
+If the directory being monitored is inside ${home_directory}, then adding permissions is not required and this section can be skipped.
+====
+
+Configuring a File Harvester requires adding read and write permissions to the Security Manager before configuration.
+
+The following permissions, replacing <DIRECTORY_PATH> with the path of the directory being monitored, are required for each configured File Harvester and should be placed in the File Harvester section inside ${home_directory}/security/configurations.policy.
+
+----
+permission java.io.FilePermission "<DIRECTORY_PATH>", "read";
+permission java.io.FilePermission "<DIRECTORY_PATH>${/}-", "read, write";
+----
+
+.Adding New Permissions
+[IMPORTANT]
+====
+After adding permissions, a system restart is required for them to take effect.
+====
+
+Line 1 gives the File Harvester the permissions to read from the monitored directory path. Line 2 gives the File Harvester the permissions to recursively read and write from the monitored directory path, specified by the directory path's suffix "${/}-".
+
+Trailing slashes after <DIRECTORY_PATH> have no effect on the permissions granted. For example, adding a permission for "/test/path" and "/test/path/" are equivalent. The recursive forms "/test/path${/}-", and "/test/path/${/}-" are also equivalent.
+
+If a File Harvester configuration is deleted, then the corresponding permissions that were added should be deleted to avoid granting unnecessary permissions to parts of the system.
+
+=== Configuring the File Harvester
+
+.File Harvester Permissions
+[IMPORTANT]
+====
+When configuring a File Harvester, make sure to set permissions on the new directory to allow ${branding} to access it. Setting permissions should be done *before* configuring a File Harvester. See <<_configuring_permissions_for_the_file_harvester,Configuring Permissions for the File Harvester >> for in-depth instructions on configuring permissions.
+====
+
+.Configuring the URL Resource Reader
+[IMPORTANT]
+====
+The <<_url_resource_reader, URL Resource Reader>> must be configured prior to configuring a File Harvester to allow reading from the configured directory. This allows the ${ddf-catalog} to download the products.
+====
+
+.Pairing a Harvester Listener
+[IMPORTANT]
+====
+Configuring a File Harvester requires configuring a Harvester Listener. See <<_configuring_harvester_listeners, Configuring Harvester Listeners>> for more details.
+====
+
+Configure the File Harvester from the ${admin-console}:
+
+. Navigate to the *${admin-console}*.
+. Select the *${ddf-catalog}* application.
+. Select the *Configuration* tab.
+. Select *File Harvester*.
+
+See <<org.codice.ddf.catalog.harvest.file.DirectoryHarvester,File Harvester configurations>> for all possible configurations.

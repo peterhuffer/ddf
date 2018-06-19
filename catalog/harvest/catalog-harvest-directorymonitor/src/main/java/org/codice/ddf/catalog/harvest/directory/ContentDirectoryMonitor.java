@@ -81,7 +81,7 @@ public class ContentDirectoryMonitor implements DirectoryMonitor {
 
   private Integer readLockIntervalMilliseconds;
 
-  Processor systemSubjectBinder = new SystemSubjectBinder();
+  private Processor systemSubjectBinder = new SystemSubjectBinder();
 
   /**
    * Constructs a monitor for a specific directory that will ingest files into the Content
@@ -375,7 +375,9 @@ public class ContentDirectoryMonitor implements DirectoryMonitor {
             break;
           default:
             throw new IllegalArgumentException(
-                String.format("Received invalid processingMechanism [%s]", processingMechanism));
+                String.format(
+                    "Received invalid processingMechanism [%s]. Expected [%s] or [%s].",
+                    processingMechanism, DELETE, MOVE));
         }
 
         LOGGER.trace("ContentDirectoryMonitor inbox = {}", stringBuilder);
@@ -413,6 +415,7 @@ public class ContentDirectoryMonitor implements DirectoryMonitor {
    * @param location harvest location
    * @return new string with strip slashed
    */
+  // TODO: phuffer - probably can remove this
   private String stripEndingSlash(String location) {
     if (location.endsWith("/")) {
       return location.substring(0, location.length() - 1);

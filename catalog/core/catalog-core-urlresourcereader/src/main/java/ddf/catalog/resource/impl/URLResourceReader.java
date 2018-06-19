@@ -35,6 +35,10 @@ import java.net.URLConnection;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.security.AccessControlException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -85,10 +89,13 @@ public class URLResourceReader implements ResourceReader {
 
   private static final String USERNAME = "username";
 
+  @SuppressWarnings("squid:S2068" /* Password property key */)
   private static final String PASSWORD = "password";
 
   private static final Set<String> QUALIFIER_SET =
       ImmutableSet.of(URL_HTTP_SCHEME, URL_HTTPS_SCHEME, URL_FILE_SCHEME);
+
+  private static final String ERROR_RETRIEVING_RESOURCE = "Error retrieving resource";
 
   /** Mapper for file extensions-to-mime types (and vice versa) */
   private MimeTypeMapper mimeTypeMapper;
@@ -176,7 +183,7 @@ public class URLResourceReader implements ResourceReader {
           URLResourceReader.class.getSimpleName());
 
       for (String rootResourceDirectoryPath : rootResourceDirectoryPaths) {
-        String path = null;
+        String path;
         try {
           path = Paths.get(rootResourceDirectoryPath).toAbsolutePath().normalize().toString();
           this.rootResourceDirectories.add(path);
@@ -243,7 +250,7 @@ public class URLResourceReader implements ResourceReader {
   @Override
   public ResourceResponse retrieveResource(URI resourceURI, Map<String, Serializable> properties)
       throws IOException, ResourceNotFoundException {
-    String bytesToSkip = null;
+    String bytesToSkip;
     if (resourceURI == null) {
       LOGGER.debug("Resource URI was null");
       throw new ResourceNotFoundException("Unable to find resource");
@@ -291,38 +298,41 @@ public class URLResourceReader implements ResourceReader {
                 + this.rootResourceDirectories.toString());
       }
     } else {
-      ResourceNotFoundException ce =
-          new ResourceNotFoundException(
-              "Resource qualifier ( "
-                  + resourceURI.getScheme()
-                  + " ) not valid. "
-                  + URLResourceReader.TITLE
-                  + " requires a qualifier of "
-                  + URL_HTTP_SCHEME
-                  + " or "
-                  + URL_HTTPS_SCHEME
-                  + " or "
-                  + URL_FILE_SCHEME);
-      throw ce;
+      throw new ResourceNotFoundException(
+          "Resource qualifier ( "
+              + resourceURI.getScheme()
+              + " ) not valid. "
+              + URLResourceReader.TITLE
+              + " requires a qualifier of "
+              + URL_HTTP_SCHEME
+              + " or "
+              + URL_HTTPS_SCHEME
+              + " or "
+              + URL_FILE_SCHEME);
     }
   }
 
   private ResourceResponse retrieveFileProduct(
       URI resourceURI, String productName, String bytesToSkip) throws ResourceNotFoundException {
-    URLConnection connection = null;
+    URLConnection connection;
     try {
-      LOGGER.debug("Opening connection to: {}", resourceURI);
+      LOGGER.trace("Opening connection to: {}", resourceURI);
       connection = resourceURI.toURL().openConnection();
 
+      final String originalFileName = productName;
       productName =
-          StringUtils.defaultIfBlank(
-              handleContentDispositionHeader(
-                  connection.getHeaderField(HttpHeaders.CONTENT_DISPOSITION)),
-              productName);
+          AccessController.doPrivileged(
+              (PrivilegedAction<String>)
+                  () ->
+                      StringUtils.defaultIfBlank(
+                          handleContentDispositionHeader(
+                              connection.getHeaderField(HttpHeaders.CONTENT_DISPOSITION)),
+                          originalFileName));
 
       String mimeType = getMimeType(resourceURI, productName);
 
-      InputStream is = connection.getInputStream();
+      InputStream is;
+      is = doPrivilegedUrlRetrieval(connection);
 
       skipBytes(is, bytesToSkip);
 
@@ -330,10 +340,26 @@ public class URLResourceReader implements ResourceReader {
           new ResourceImpl(
               new BufferedInputStream(is), mimeType, FilenameUtils.getName(productName)));
     } catch (MimeTypeResolutionException | IOException e) {
-      LOGGER.info("Error retrieving resource", e);
+      LOGGER.info(ERROR_RETRIEVING_RESOURCE, e);
       throw new ResourceNotFoundException(
           "Unable to retrieve resource at: " + resourceURI.toString(), e);
     }
+  }
+
+  private InputStream doPrivilegedUrlRetrieval(URLConnection connection) throws IOException {
+    InputStream is;
+    try {
+      is =
+          AccessController.doPrivileged(
+              (PrivilegedExceptionAction<InputStream>) connection::getInputStream);
+    } catch (PrivilegedActionException e) {
+      if (!(e.getException() instanceof IOException)) {
+        LOGGER.debug("Unexpected exception type when retrieving resource", e);
+        throw new IOException(ERROR_RETRIEVING_RESOURCE);
+      }
+      throw (IOException) e.getException();
+    }
+    return is;
   }
 
   private ResourceResponse retrieveHttpProduct(
@@ -365,7 +391,7 @@ public class URLResourceReader implements ResourceReader {
 
       Response clientResponse = client.get();
 
-      InputStream is = null;
+      InputStream is;
       Object entityObj = clientResponse.getEntity();
       if (entityObj instanceof InputStream) {
         is = (InputStream) entityObj;
@@ -373,9 +399,7 @@ public class URLResourceReader implements ResourceReader {
             && Response.Status.PARTIAL_CONTENT.getStatusCode() != clientResponse.getStatus()) {
           String error = null;
           try {
-            if (is != null) {
-              error = IOUtils.toString(is);
-            }
+            error = IOUtils.toString(is);
           } catch (IOException ioe) {
             LOGGER.debug("Could not convert error message to a string for output.", ioe);
           }
@@ -403,7 +427,7 @@ public class URLResourceReader implements ResourceReader {
           new ResourceImpl(
               new BufferedInputStream(is), mimeType, FilenameUtils.getName(productName)));
     } catch (MimeTypeResolutionException | IOException | WebApplicationException e) {
-      LOGGER.info("Error retrieving resource", e);
+      LOGGER.info(ERROR_RETRIEVING_RESOURCE, e);
       throw new ResourceNotFoundException(
           "Unable to retrieve resource at: " + resourceURI.toString(), e);
     }

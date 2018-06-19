@@ -1,0 +1,25 @@
+:title: Configuring Harvester Listeners
+:type: subConfiguration
+:status: published
+:summary: Configure Harvester Listeners
+:parent: Configuring Harvesters
+:order: 30
+
+== {title}
+
+Harvester Listeners register themselves to Harvesters and listen for their Create, Update, and Delete events.
+
+=== Installing the Harvester Listener
+
+The Harvester Listener is installed by default with a standard installation of the ${ddf-catalog} application.
+
+=== Configuring the Harvester Listener
+
+Configure the Harvester Listener from the ${admin-console}:
+
+. Navigate to the *${admin-console}*.
+. Select the *${ddf-catalog}* application.
+. Select the *Configuration* tab.
+. Select *Harvester Listener*.
+
+Harvester Listeners take a single configuration field called *ID*. The *ID* must match the ID of an existing configured Harvester. The listener will use this *id* to pair itself with the correct Harvester.

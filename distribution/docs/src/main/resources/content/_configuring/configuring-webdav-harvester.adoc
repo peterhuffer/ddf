@@ -1,0 +1,31 @@
+:title: Configuring WebDav Harvesters
+:type: subConfiguration
+:status: published
+:summary: Configure WebDav Harvesters
+:parent: Configuring Harvesters
+:order: 00
+
+== {title}
+
+WebDav Harvesters will create metacards in the ${ddf-catalog} for files residing at the configured WebDav address. At any given time, the metacards in the ${ddf-catalog} will reflect the files on the WebDav server.
+
+=== Installing the WebDav Harvester
+
+The WebDav Harvester is installed by default with a standard installation of the ${ddf-catalog} application.
+
+=== Configuring the WebDav Harvester
+
+.Pairing a Harvester Listener
+[IMPORTANT]
+====
+Configuring a WebDav Harvester requires configuring a Harvester Listener. See <<_configuring_harvester_listeners, Configuring Harvester Listeners>> for more details.
+====
+
+Configure the WebDav Harvester from the ${admin-console}:
+
+. Navigate to the *${admin-console}*.
+. Select the *${ddf-catalog}* application.
+. Select the *Configuration* tab.
+. Select *File Harvester*.
+
+See <<org.codice.ddf.catalog.harvest.webdav.WebDavHarvester,WebDav Harvester configurations>> for all possible configurations.

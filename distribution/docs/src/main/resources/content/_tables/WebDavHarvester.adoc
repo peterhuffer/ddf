@@ -1,0 +1,40 @@
+:title: WebDav Harvester
+:id: org.codice.ddf.catalog.harvest.webdav.WebDavHarvester
+:type: table
+:status: published
+:application: ${ddf-catalog}
+:summary: WebDav Harvester configurations.
+
+.[[org.codice.ddf.catalog.harvest.webdav.WebDavHarvester]]WebDav Harvester
+[cols="1,1m,1,3,1,1" options="header"]
+|===
+
+|Name
+|Id
+|Type
+|Description
+|Default Value
+|Required
+
+|ID
+|id
+|String
+|A unique human-readable identifier.
+|
+|true
+
+|WebDav Address
+|webdavAddress
+|String
+|Specifies the location to be monitored in the form of an HTTP WebDav address.
+|
+|true
+
+|Attribute Overrides
+|attributeOverrides
+|String
+|Optional: Metacard attribute overrides (Key-Value pairs) that can be set on the WebDav harvester. If an attribute is specified here, it will overwrite the metacard's attribute that was created from the WebDav harvester. The format should be 'key=value'. The maximum allowed size of an attribute override is 65,535 bytes. All attributes in the <<_catalog_taxonomy_definitions, catalog taxonomy tables>> are injected into all metacards by default and can be overridden.
+|
+|false
+
+|===

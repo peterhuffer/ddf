@@ -14,7 +14,7 @@
 -->
 <metatype:MetaData xmlns:metatype="http://www.osgi.org/xmlns/metatype/v1.0.0">
 
-  <OCD name="WebDav Content Monitor"
+  <OCD name="WebDav Harvester"
     id="org.codice.ddf.catalog.harvest.webdav.WebDavHarvester">
     <AD
       description="A unique human-readable identifier."

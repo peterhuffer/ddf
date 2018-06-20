@@ -32,8 +32,7 @@ import org.slf4j.LoggerFactory;
  * @author William Miller
  */
 public class CatalogComponentResolver implements ComponentResolver {
-  private static final transient Logger LOGGER =
-      LoggerFactory.getLogger(CatalogComponentResolver.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CatalogComponentResolver.class);
 
   private final Component component;
 
@@ -53,6 +52,7 @@ public class CatalogComponentResolver implements ComponentResolver {
    * @see org.apache.camel.spi.ComponentResolver#resolveComponent(java.lang.String,
    * org.apache.camel.CamelContext)
    */
+  @Override
   public Component resolveComponent(String name, CamelContext context) {
     LOGGER.debug("INSIDE: resolveComponent");
 

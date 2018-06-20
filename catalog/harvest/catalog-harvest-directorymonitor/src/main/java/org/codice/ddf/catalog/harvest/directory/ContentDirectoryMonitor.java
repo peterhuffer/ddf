@@ -302,11 +302,6 @@ public class ContentDirectoryMonitor implements DirectoryMonitor {
             property, key, clazz.getName()));
   }
 
-  /*
-     Task that waits for the "content" CamelComponent before adding the routes from the
-     RouteBuilder to the CamelContext. This ensures content directory monitors will
-     automatically start after a system shutdown.
-  */
   private void attemptAddRoutes() {
     LOGGER.trace(
         "Attempting to add routes for content directory monitor watching {}", monitoredDirectory);
@@ -382,7 +377,7 @@ public class ContentDirectoryMonitor implements DirectoryMonitor {
 
         LOGGER.trace("ContentDirectoryMonitor inbox = {}", stringBuilder);
 
-        RouteDefinition routeDefinition = from(stringBuilder.toString());
+        RouteDefinition routeDefinition = from(stringBuilder.toString()).delayer(1000);
 
         if (attributeOverrides != null) {
           routeDefinition.setHeader(Constants.ATTRIBUTE_OVERRIDES_KEY).constant(attributeOverrides);

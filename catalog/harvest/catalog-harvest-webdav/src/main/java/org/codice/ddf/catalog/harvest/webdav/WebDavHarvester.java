@@ -233,7 +233,7 @@ public class WebDavHarvester extends PollingHarvester {
             property, key, clazz.getName()));
   }
 
-  private void setAttributeOverrides(List<String> incomingAttrOverrides) {
+  public void setAttributeOverrides(List<String> incomingAttrOverrides) {
     attributeOverrides.clear();
 
     for (String keyValuePair : incomingAttrOverrides) {
@@ -255,11 +255,11 @@ public class WebDavHarvester extends PollingHarvester {
     }
   }
 
-  private void setWebdavAddress(String webdavAddress) {
+  public void setWebdavAddress(String webdavAddress) {
     this.webdavAddress = stripEndingSlash(webdavAddress);
   }
 
-  private void setId(String id) {
+  public void setId(String id) {
     this.id = id;
   }
 

@@ -532,18 +532,15 @@ module.exports = function OpenlayersMap(
           geometry.setZIndex(options.isSelected ? 2 : 1)
           feature.setStyle(
             new Openlayers.style.Style({
-              image: new Openlayers.style.Icon({
-                img: DrawingUtility.getPin({
-                  fillColor: options.color,
-                  strokeColor: options.isSelected ? 'black' : 'white',
-                  icon: options.icon,
+              image: new Openlayers.style.Circle({
+                radius: 5,
+                fill: new Openlayers.style.Fill({ color: options.color }),
+                stroke: new Openlayers.style.Stroke({
+                  color: options.color,
+                  width: 1,
                 }),
-                imgSize: [x, y],
-                anchor: [x / 2, 0],
-                anchorOrigin: 'bottom-left',
-                anchorXUnits: 'pixels',
-                anchorYUnits: 'pixels',
               }),
+              text: this.createTextStyle(feature, 10),
             })
           )
         } else if (
@@ -566,6 +563,78 @@ module.exports = function OpenlayersMap(
           feature.setStyle(styles)
         }
       }
+    },
+    createTextStyle(feature, resolution) {
+      var offsetX = parseInt(0, 10)
+      var offsetY = parseInt(15, 10)
+      var placement = 'point'
+      var maxAngle = 45
+      var overflow = true
+      var rotation = 0
+      var font = 'normal 12px arial'
+      var fillColor = '#aa3300'
+      var outlineColor = '#ffffff'
+      var outlineWidth = parseInt(3, 10)
+
+      return new Openlayers.style.Text({
+        font: font,
+        text: this.getText(feature, resolution),
+        fill: new Openlayers.style.Fill({ color: fillColor }),
+        stroke: new Openlayers.style.Stroke({
+          color: outlineColor,
+          width: outlineWidth,
+        }),
+        offsetX: offsetX,
+        offsetY: offsetY,
+        placement: placement,
+        maxAngle: maxAngle,
+        overflow: overflow,
+        rotation: rotation,
+      })
+    },
+    getText(feature, resolution) {
+      var type = 'shorten'
+      var maxResolution = 20
+      var text = feature.get('name')
+
+      if (resolution > maxResolution) {
+        text = ''
+      } else if (type == 'hide') {
+        text = ''
+      } else if (type == 'shorten') {
+        text = this.trunc(text, 20)
+      } else if (
+        type == 'wrap' &&
+        (!dom.placement || dom.placement.value != 'line')
+      ) {
+        text = this.stringDivider(text, 16, '\n')
+      }
+
+      return text
+    },
+    stringDivider(str, width, spaceReplacer) {
+      if (str.length > width) {
+        var p = width
+        while (p > 0 && (str[p] != ' ' && str[p] != '-')) {
+          p--
+        }
+        if (p > 0) {
+          var left
+          if (str.substring(p, p + 1) == '-') {
+            left = str.substring(0, p + 1)
+          } else {
+            left = str.substring(0, p)
+          }
+          var right = str.substring(p + 1)
+          return (
+            left + spaceReplacer + stringDivider(right, width, spaceReplacer)
+          )
+        }
+      }
+      return str
+    },
+    trunc(str, n) {
+      return str.length > n ? str.substr(0, n - 1) + '...' : str.substr(0)
     },
     /*
          Updates a passed in geometry to be hidden
